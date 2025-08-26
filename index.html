@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCR</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo" onclick="showCategory('main')" style="cursor: pointer;">
+                    DCR<span id="typedText"></span><span class="cursor">|</span>
+                </h1>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Personal Zone</h3>
+                    <ul class="nav-menu">
+                        <li><a href="#" onclick="showCategory('simulator')" class="nav-link">
+                            <i class="nav-icon ri-gamepad-line"></i>
+                            <span class="nav-text">Level-up simulator</span>
+                        </a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Catalog</h3>
+                    <div class="nav-subsection">
+                        <h4 class="nav-subsection-title">Pillars</h4>
+                        <ul class="nav-menu">
+                            <li><a href="#" onclick="showCategory('professionalism')" class="nav-link">
+                                <i class="nav-icon ri-code-box-line"></i>
+                                <span class="nav-text">Professionalism</span>
+                            </a></li>
+                            <li><a href="#" onclick="showCategory('tech')" class="nav-link">
+                                <i class="nav-icon ri-file-paper-2-line"></i>
+                                <span class="nav-text">Tech</span>
+                            </a></li>
+                            <li><a href="#" onclick="showCategory('knowledge-unlock')" class="nav-link">
+                                <i class="nav-icon ri-edit-2-line"></i>
+                                <span class="nav-text">Knowledge Unlock</span>
+                            </a></li>
+                            <li><a href="#" onclick="showCategory('collaboration')" class="nav-link">
+                                <i class="nav-icon ri-service-line"></i>
+                                <span class="nav-text">Collaboration</span>
+                            </a></li>
+                        </ul>
+                    </div>
+                    <div class="nav-subsection">
+                        <h4 class="nav-subsection-title">Badges</h4>
+                        <ul class="nav-menu">
+                            <li><a href="#" onclick="showCategory('roadmaps')" class="nav-link">
+                                <i class="nav-icon ri-route-line"></i>
+                                <span class="nav-text">Roadmaps</span>
+                            </a></li>
+                        </ul>
+                    </div>
+                    <div class="nav-subsection">
+                        <h4 class="nav-subsection-title">Extra</h4>
+                        <ul class="nav-menu">
+                            <li><a href="#" onclick="showCategory('extra')" class="nav-link">
+                                <i class="nav-icon ri-star-line"></i>
+                                <span class="nav-text">Extra</span>
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Resources</h3>
+                    <ul class="nav-menu">
+                        <li><a href="#" onclick="showCategory('guidelines')" class="nav-link">
+                            <i class="nav-icon ri-book-open-line"></i>
+                            <span class="nav-text">Guidelines</span>
+                        </a></li>
+                        <li><a href="#" onclick="showCategory('faq')" class="nav-link">
+                            <i class="nav-icon ri-question-answer-line"></i>
+                            <span class="nav-text">FAQ</span>
+                        </a></li>
+                        <li><a href="#" onclick="showCategory('forms')" class="nav-link">
+                            <i class="nav-icon ri-file-list-3-line"></i>
+                            <span class="nav-text">Forms</span>
+                        </a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-container">
+            <header class="header">
+                <div class="header-content">
+                    <h2 class="category-title" id="categoryTitle">Welcome to DCR 2.0</h2>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div id="achievementCards" class="cards-container">
+                    <!-- Achievement cards will be populated here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <div class="details-overlay" id="detailsOverlay" onclick="closeDetails()"></div>
+    <div class="details-modal" id="detailsModal">
+        <div class="details-header">
+            <h2 id="detailsTitle">Achievement Details</h2>
+            <button class="close-btn" onclick="closeDetails()">×</button>
+        </div>
+        <div class="details-content">
+            <div class="details-main">
+                <div class="details-icon" id="detailsIcon">🏆</div>
+                <div class="details-info">
+                    <h3 id="detailsCertTitle">Certification Name</h3>
+                    <p class="details-provider" id="detailsProvider">Provider</p>
+                    <p class="details-points" id="detailsPoints">100 points</p>
+                </div>
+            </div>
+            
+            <div class="details-description">
+                <h4>Description</h4>
+                <p id="detailsDescription">Achievement description goes here...</p>
+            </div>
+
+            <div class="details-specs">
+                <div class="spec-item">
+                    <h4>Duration</h4>
+                    <p id="detailsDuration">3 months</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Price</h4>
+                    <p id="detailsPrice">$200</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Passing Grade</h4>
+                    <p id="detailsPassingGrade">70%</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Exam Code</h4>
+                    <p id="detailsExamCode">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Questions</h4>
+                    <p id="detailsQuestionCount">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Question Types</h4>
+                    <p id="detailsQuestionTypes">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Proctored</h4>
+                    <p id="detailsProctored">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Validity</h4>
+                    <p id="detailsValidity">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Prerequisites</h4>
+                    <p id="detailsPrerequisites">N/A</p>
+                </div>
+                <div class="spec-item">
+                    <h4>Retake Policy</h4>
+                    <p id="detailsRetakePolicy">N/A</p>
+                </div>
+                <div class="spec-item official-link">
+                    <h4>🔗 Official Certification Page</h4>
+                    <p id="detailsOfficialUrl"><a href="#" target="_blank" rel="noopener">View Official Details →</a></p>
+                </div>
+            </div>
+
+            <div class="details-skills">
+                <h4>Tags</h4>
+                <div class="skills-list" id="detailsSkills">
+                    <!-- Tags will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+# DCR goals
+
+Develeap Career Roadmap (DCR) is a personal development program that aims at multiple **targets**:
+
+- Continuously stretch our abilities & skills, and always be at the front
+- CL - Continuous Learning
+- Continuously increase our market value
+- Long-term plan but dynamic
+- Motivation
+- Consider different types of consultants, support everyone
+
+Develeap Career Roadmap (DCR) is a personal development program that aims at multiple **goals**:
+
+- Continuously stretch our abilities & skills, and always be at the front
+- Continuous Learning
+- Continuously increase our market value
+- Long-term plan for our careers, and dynamic
+- Motivation
+- Consider different types of consultants, support various cases
+
+# General
+
+- DCR is usually created for a new employee at least 3 months after he/she joined develeap because we want to focus our
+- As the goal of the DCR program is to create a plan for career development, achievements that have been done before the DCR creation will not count. We plan for the future and get points for achieving our goals.
+- **Achievements backlog** - Every consultant has an achievements backlog which will be created by the consultant himself & his team leader. The achievements can be chosen from the general achievements backlog and new ideas of achievements are more than welcome.
+Each achievement has its own ‘price’ (the number of points it is worth).
+- **Points to level up** - For each level, you need a different amount of points. When you reach the desired amount of points - you level up!
+1
+2
+3
+4
+- **Celebration Points** - Every quarter, develeap has a “Celebration point”. At that point, we are celebrating all the leveled-up consultants and on that day the winners’ backlog will be “reset” and will be filled by their team leader with new achievements to achieve in order to get to the next level. 
+
+January- March (will be received in April salary, at the beginning of May).
+
+April-June (will be received in July salary, at the beginning of August).
+
+July- September (will be received in October salary, at the beginning of November).
+
+October- December (will be received in January salary, at the beginning of February).
+
+- Every achievement should be documented and shared with the TL, for example:
+    - Code review - summarize the code review in an email and send to TL (you can use also AI agents to summarize the meeting)
+    - Articles / Notion articles - links should be sent to TL or included in the DCR sheet
+    - etc…
+- **Level up, get a raise** - when you level up, we want to celebrate with you - not only with the Celebration Point itself but also with a raise.
+The raise will occur on the same quarter of level up (If you level up at the end of October, you’ll receive the raise on the salary of December (which will be received at the start of January)
+
+1. **Who should know when I level up?** - when leveling up, review your achievements with your TL and plan your next achievements planning. After reviewing with the TL, it will be sent to GL for approval. 
+
+There are achievements that are easy to measure, such as certifications, articles, lectures, etc. However, there are also achievements that are harder to measure, such as Code Reviewee or Code Reviewer. 
+In order to align everyone to the same standard, every achievement must have a document. For certification, it can be the credly certification itself for example. For the article, it is the link for the article. For code reviews, it’s a summary email or a summary notion page, with a link to it.
+
+Eventually, when you level up, you’ll need to have all those documents’ links inside the DCR sheet, in the “Document” column.
+
+1. DCR, and in general, effective career development, requires high involvement, and high effort, including putting extra time into the process. Based on that assumption, we don’t work on DCR achievements on customer time (obviously except for the billable hours or specific achievements that happen in the customer, such as “Peer Reviewee”).
+
+1. Role expectation definition - goals relevancy might change between different roles. For example, a team leader is expected to run code reviews to the team he manages, as a part of the role expectation. So it won’t count as a DCR goal. 
+Therefore, it is crucial, before the goals-setting stage, to define the role expectation, in order to reach effective career development.
+
+1. Goals setting is a cooperative process by the team member and his team leader. After choosing your goals for the coming level, you can still change them together with the TL. Technically the form is locked for frequent changes.
+
+weekly reports are now mandatory. team leader will approve at the end of quarter that it was done properly
+
+# Points
+
+- If you have reached more points than needed in order to level up (i.e. you need 1000 to level up and you have 1100) the points are saved for the next level! Points are not wasted 😉
+- Billable hours can't cross the maximum count - if you set the Billable hours to 515 and you got 520, it's still 515. Also, the extra hours aren't saved for the next level. The billable hours are not counted quarterly, but from the beginning of the level. For example, If Bob has leveled up in 1st of April, and he got 515 billable hours only in the end of September, he can still level up as the 515 billable hours are calculated across the level, and not across the quarter.
+
+# Roadmaps & Badges
+
+Roadmap badges are awarded for achieving a group of certifications.
+
+The reward is given for someone who meets the criteria, meaning if you already have all/part of the certifications that are part of a roadmap, you will get the bonus points once you get the last missing certification (or get immedaiately if already have all of them) 
+
+# Certification circles
+
+form
+
+percentage of each group size
+
+percentage for miluimnik
+
+declare in the first month of the quarter
+
+for certifications above 130 poonts
+
+# Miluim
+
+miluimniks will get additional month (or more, if the miluim is longer than a month, but minimum is 1 month) to achieve points and billable hours
+
+the billable hours will count for both quarters
+
+the raise will occur in the last month of the extension period, meaning it can be any month of the year.
+
+Leveling up in such way, will not affect the next level up, meaning a possibility to level up twice in the same quarter
+
+miluimnik who is part of certification-circle, will add 5% to the points that each circle member gets (up to 2 such extras in a circle)
+
+# Promoted items
+
+Some items are promoted each quarter. Such items get extra (~10%) points in that quarter, and are shown on the main page and the catalog.
+
+# Forms
+
+form 1 is for suggesting new items to the DCR
+
+form 2 is for submitting certification-circles

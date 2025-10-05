@@ -1248,7 +1248,7 @@
       "duration": "N/A",
       "price": "N/A",
       "passingGrade": "N/A",
-      "description": "Internal lecture inside develeap. i.e - Tech Tuesday. A Tech Tuesday that is ready to be uploaded to our YouTube channel - will be promoted to a 'Public Lecture' achievement.",
+      "description": "Internal lecture inside develeap.",
       "skills": [],
       "provider": "Education"
     },
@@ -1261,6 +1261,18 @@
       "price": "N/A",
       "passingGrade": "N/A",
       "description": "Any lecture outside develeap, i.e - Lishka, meetup, YouTube",
+      "skills": [],
+      "provider": "Public Speaking"
+    },
+    {
+      "id": 107,
+      "title": "Tech-Tuesday Lecture",
+      "points": 90,
+      "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
+      "duration": "N/A",
+      "price": "N/A",
+      "passingGrade": "N/A",
+      "description": "Tech Tuesday lecture.",
       "skills": [],
       "provider": "Public Speaking"
     },

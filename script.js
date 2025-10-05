@@ -1142,6 +1142,17 @@ function renderAchievements(category) {
                                     <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                                         New
                                     </div>
+                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">Tech Tuesday lectures are now worth 90 points (instead of 50)</h4>
+                                </div>
+                                <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">
+                                    Roadmaps, certification-circles and more. Check 'guidelines' section for more details.
+                                </p>
+                            </div>
+                            <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        New
+                                    </div>
                                     <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">New ways to get value and earn points</h4>
                                 </div>
                                 <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">

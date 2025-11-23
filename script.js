@@ -7,15 +7,49 @@ function addToCart(achievementId) {
   const achievement = findAchievementById(achievementId);
   if (!achievement) return;
 
+  // Check if item supports quantity (knowledge-unlock and collaboration categories)
+  const supportsQuantity = ["knowledge-unlock", "collaboration"].includes(achievement.category);
+
   // Check if item is already in cart
-  if (cartItems.find((item) => item.id === achievementId)) {
-    return; // Item already in cart
+  const existingItem = cartItems.find((item) => item.id === achievementId);
+  if (existingItem) {
+    if (supportsQuantity) {
+      // Increment quantity for items that support it (max 9)
+      const currentQuantity = existingItem.quantity || 1;
+      if (currentQuantity >= 9) {
+        return; // Already at maximum quantity
+      }
+      existingItem.quantity = currentQuantity + 1;
+      updateCartDisplay();
+      updateMenuCartSummary();
+
+      // Re-render current category to update button states
+      if (
+        [
+          "professionalism",
+          "tech",
+          "knowledge-unlock",
+          "collaboration",
+          "extra",
+        ].includes(currentCategory)
+      ) {
+        renderAchievements(currentCategory);
+      }
+      return;
+    } else {
+      return; // Item already in cart and doesn't support quantity
+    }
   }
 
   // Create a copy of the achievement with updated points if promoted
   const cartItem = { ...achievement };
   if (achievement.promoted) {
     cartItem.points = Math.round(achievement.points * 1.1);
+  }
+
+  // Initialize quantity for quantifiable items
+  if (supportsQuantity) {
+    cartItem.quantity = 1;
   }
 
   // Preserve selectedCertification for certification renewal items
@@ -51,6 +85,35 @@ function addToCart(achievementId) {
 
 function removeFromCart(achievementId) {
   cartItems = cartItems.filter((item) => item.id !== achievementId);
+  updateCartDisplay();
+  updateMenuCartSummary();
+
+  // Re-render current category to update button states
+  if (
+    [
+      "professionalism",
+      "tech",
+      "knowledge-unlock",
+      "collaboration",
+      "extra",
+    ].includes(currentCategory)
+  ) {
+    renderAchievements(currentCategory);
+  }
+}
+
+function decrementQuantity(achievementId) {
+  const item = cartItems.find((cartItem) => cartItem.id === achievementId);
+  if (!item || !item.quantity) return;
+
+  if (item.quantity > 1) {
+    item.quantity--;
+  } else {
+    // Remove item if quantity would go below 1
+    removeFromCart(achievementId);
+    return;
+  }
+
   updateCartDisplay();
   updateMenuCartSummary();
 
@@ -123,7 +186,10 @@ function validateLevel() {
   };
 
   const requiredPoints = levelRequirements[selectedLevel];
-  const currentPoints = cartItems.reduce((sum, item) => sum + item.points, 0);
+  const currentPoints = cartItems.reduce((sum, item) => {
+    const quantity = item.quantity || 1;
+    return sum + (item.points * quantity);
+  }, 0);
 
   // Check for mandatory items (Billable Hours and Weekly Reports)
   const mandatoryItems = ["Billable hours", "Weekly Reports"];
@@ -275,8 +341,11 @@ function updateMenuCartSummary() {
   // Only show summary if cart has items
   if (cartItems.length === 0) return;
 
-  const totalPoints = cartItems.reduce((sum, item) => sum + item.points, 0);
-  const itemCount = cartItems.length;
+  const totalPoints = cartItems.reduce((sum, item) => {
+    const quantity = item.quantity || 1;
+    return sum + (item.points * quantity);
+  }, 0);
+  const itemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   const summaryDiv = document.createElement("div");
   summaryDiv.className = "menu-cart-summary";
@@ -341,8 +410,11 @@ function renderSimulator() {
     existingSortControls.remove();
   }
 
-  const totalPoints = cartItems.reduce((sum, item) => sum + item.points, 0);
-  const itemCount = cartItems.length;
+  const totalPoints = cartItems.reduce((sum, item) => {
+    const quantity = item.quantity || 1;
+    return sum + (item.points * quantity);
+  }, 0);
+  const itemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   // Preserve the selected level value
   const currentLevelSelect = document.getElementById("levelSelect");
@@ -576,13 +648,30 @@ function renderSimulator() {
                                               item.points
                                             } points • ${item.provider}</span>
                                         </div>`
-                                        : `<p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">${
-                                            item.provider
-                                          } • ${item.points} points${
-                                            item.promoted
-                                              ? ' <span style="color: var(--success-color); font-weight: 600;">(+10% bonus)</span>'
-                                              : ""
-                                          }</p>`
+                                        : `<div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">${
+                                              item.provider
+                                            } • ${item.points} points${
+                                              item.promoted
+                                                ? ' <span style="color: var(--success-color); font-weight: 600;">(+10% bonus)</span>'
+                                                : ""
+                                            }</p>
+                                            ${
+                                              item.quantity
+                                                ? `<div onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 0.3rem; margin-left: 0.5rem; background: var(--glass-light); border: 1px solid var(--glass-border); border-radius: 0.4rem; padding: 0.15rem 0.3rem;">
+                                                    <button onclick="decrementQuantity(${
+                                                      item.id
+                                                    })" style="background: none; border: none; color: var(--text-primary); cursor: pointer; font-size: 1rem; padding: 0 0.2rem; line-height: 1;">−</button>
+                                                    <span style="color: var(--text-primary); font-weight: 600; min-width: 1.2rem; text-align: center; font-size: 0.85rem;">${
+                                                      item.quantity
+                                                    }</span>
+                                                    <button onclick="addToCart(${
+                                                      item.id
+                                                    })" style="background: none; border: none; color: var(--text-primary); cursor: pointer; font-size: 1rem; padding: 0 0.2rem; line-height: 1;">+</button>
+                                                  </div>`
+                                                : ""
+                                            }
+                                          </div>`
                                     }
                                 </div>
                             </div>
@@ -936,17 +1025,39 @@ function renderAchievements(category) {
 
         // Add plus button only for pillar categories
         const isInCart = cartItems.find((item) => item.id === achievement.id);
-        const plusButton = `
-                <button class="add-to-cart-btn ${isInCart ? "added" : ""}" 
-                        data-achievement-id="${achievement.id}" 
-                        onclick="event.stopPropagation(); ${
-                          isInCart
-                            ? `removeFromCart(${achievement.id})`
-                            : `addToCart(${achievement.id})`
-                        };">
-                    ${isInCart ? "✓" : "+"}
-                </button>
-            `;
+        const supportsQuantity = ["knowledge-unlock", "collaboration"].includes(category);
+
+        let plusButton = "";
+
+        if (isInCart && supportsQuantity) {
+          // Show quantity controls for items that support it
+          const quantity = isInCart.quantity || 1;
+          plusButton = `
+            <div class="quantity-controls" onclick="event.stopPropagation();">
+              <button class="quantity-btn minus-btn" onclick="decrementQuantity(${achievement.id});">−</button>
+              <span class="quantity-display">${quantity}</span>
+              <button class="quantity-btn plus-btn ${quantity >= 9 ? 'disabled' : ''}" onclick="addToCart(${achievement.id});">+</button>
+            </div>
+          `;
+        } else if (isInCart) {
+          // Show checkmark for single-instance items
+          plusButton = `
+            <button class="add-to-cart-btn added"
+                    data-achievement-id="${achievement.id}"
+                    onclick="event.stopPropagation(); removeFromCart(${achievement.id});">
+                ✓
+            </button>
+          `;
+        } else {
+          // Show plus button to add item
+          plusButton = `
+            <button class="add-to-cart-btn"
+                    data-achievement-id="${achievement.id}"
+                    onclick="event.stopPropagation(); addToCart(${achievement.id});">
+                +
+            </button>
+          `;
+        }
 
         return `
                 <div class="achievement-card" onclick="showDetails(${
@@ -1333,19 +1444,41 @@ function renderAchievements(category) {
         "extra",
       ].includes(category);
       const isInCart = cartItems.find((item) => item.id === achievement.id);
-      const plusButton = isPillarCategory
-        ? `
-            <button class="add-to-cart-btn ${isInCart ? "added" : ""}" 
-                    data-achievement-id="${achievement.id}" 
-                    onclick="event.stopPropagation(); ${
-                      isInCart
-                        ? `removeFromCart(${achievement.id})`
-                        : `addToCart(${achievement.id})`
-                    };">
-                ${isInCart ? "✓" : "+"}
+      const supportsQuantity = ["knowledge-unlock", "collaboration"].includes(category);
+
+      let plusButton = "";
+
+      if (isPillarCategory) {
+        if (isInCart && supportsQuantity) {
+          // Show quantity controls for items that support it
+          const quantity = isInCart.quantity || 1;
+          plusButton = `
+            <div class="quantity-controls" onclick="event.stopPropagation();">
+              <button class="quantity-btn minus-btn" onclick="decrementQuantity(${achievement.id});">−</button>
+              <span class="quantity-display">${quantity}</span>
+              <button class="quantity-btn plus-btn ${quantity >= 9 ? 'disabled' : ''}" onclick="addToCart(${achievement.id});">+</button>
+            </div>
+          `;
+        } else if (isInCart) {
+          // Show checkmark for single-instance items
+          plusButton = `
+            <button class="add-to-cart-btn added"
+                    data-achievement-id="${achievement.id}"
+                    onclick="event.stopPropagation(); removeFromCart(${achievement.id});">
+                ✓
             </button>
-        `
-        : "";
+          `;
+        } else {
+          // Show plus button to add item
+          plusButton = `
+            <button class="add-to-cart-btn"
+                    data-achievement-id="${achievement.id}"
+                    onclick="event.stopPropagation(); addToCart(${achievement.id});">
+                +
+            </button>
+          `;
+        }
+      }
 
       return `
             <div class="achievement-card" onclick="showDetails(${
@@ -1501,7 +1634,10 @@ function findAchievementById(id) {
     const achievement = achievementsData[category].find(
       (item) => item.id === id
     );
-    if (achievement) return achievement;
+    if (achievement) {
+      // Add category information to the achievement
+      return { ...achievement, category };
+    }
   }
   return null;
 }

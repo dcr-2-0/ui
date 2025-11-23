@@ -1325,10 +1325,12 @@ function renderAchievements(category) {
 
       // Add plus button only for pillar categories
       const isPillarCategory = [
+        "professionalism",
         "tech",
         "knowledge-unlock",
         "collaboration",
         "roadmaps",
+        "extra",
       ].includes(category);
       const isInCart = cartItems.find((item) => item.id === achievement.id);
       const plusButton = isPillarCategory

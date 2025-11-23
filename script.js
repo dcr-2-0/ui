@@ -30,6 +30,7 @@ function addToCart(achievementId) {
           "tech",
           "knowledge-unlock",
           "collaboration",
+          "roadmaps",
           "extra",
         ].includes(currentCategory)
       ) {
@@ -76,6 +77,7 @@ function addToCart(achievementId) {
       "tech",
       "knowledge-unlock",
       "collaboration",
+      "roadmaps",
       "extra",
     ].includes(currentCategory)
   ) {
@@ -95,6 +97,7 @@ function removeFromCart(achievementId) {
       "tech",
       "knowledge-unlock",
       "collaboration",
+      "roadmaps",
       "extra",
     ].includes(currentCategory)
   ) {
@@ -124,6 +127,7 @@ function decrementQuantity(achievementId) {
       "tech",
       "knowledge-unlock",
       "collaboration",
+      "roadmaps",
       "extra",
     ].includes(currentCategory)
   ) {
@@ -143,6 +147,7 @@ function clearCart() {
       "tech",
       "knowledge-unlock",
       "collaboration",
+      "roadmaps",
       "extra",
     ].includes(currentCategory)
   ) {

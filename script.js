@@ -45,7 +45,7 @@ function addToCart(achievementId) {
   // Create a copy of the achievement with updated points if promoted
   const cartItem = { ...achievement };
   if (achievement.promoted) {
-    cartItem.points = Math.round(achievement.points * 1.1);
+    cartItem.points = achievement.promotedPoints || Math.round(achievement.points * 1.1);
   }
 
   // Initialize quantity for quantifiable items
@@ -300,9 +300,11 @@ function showValidationResult(message, isSuccess, missingMandatory = []) {
 }
 
 function getEffectivePoints(achievement) {
-  return achievement.promoted
-    ? Math.round(achievement.points * 1.1)
-    : achievement.points;
+  if (achievement.promoted) {
+    // Use custom promotedPoints if specified, otherwise calculate 1.1x
+    return achievement.promotedPoints || Math.round(achievement.points * 1.1);
+  }
+  return achievement.points;
 }
 
 function sortAchievements(achievements, sortMode) {
@@ -1225,9 +1227,9 @@ function renderAchievements(category) {
                             achievement.promoted
                               ? `<span class="old-points">${
                                   achievement.points
-                                }</span> <span class="new-points">${Math.round(
-                                  achievement.points * 1.1
-                                )} points</span>`
+                                }</span> <span class="new-points">${
+                                  achievement.promotedPoints || Math.round(achievement.points * 1.1)
+                                } points</span>`
                               : `${achievement.points} points`
                           }</p>`
                     }
@@ -1268,6 +1270,19 @@ function renderAchievements(category) {
                             </style>
                             <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        New
+                                    </div>
+                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">New certifications added</h4>
+                                </div>
+                                <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem; line-height: 1.6; font-size: 0.8rem;">
+                                    <li>AWS Certified Generative AI Developer - Professional, currently promoted from 400 to 500 points</li>
+                                    <li>GitLab Certified CI/CD Associate, 70 points</li>
+                                    <li>Cast AI APA Hero, currently promoted from 60 to 80 points</li>
+                                </ul>
+                            </div>
+                            <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
                                     <div style="background: linear-gradient(135deg, var(--error-color), #dc2626); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                                         Important
                                     </div>
@@ -1278,45 +1293,25 @@ function renderAchievements(category) {
                                 </p>
                             </div>
                             <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        New
-                                    </div>
-                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">Tech Tuesday lectures points update</h4>
-                                </div>
+                                <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.4rem 0;">Tech Tuesday lectures points update</h4>
                                 <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">
                                     Tech Tuesday lectures are now worth 90 points (instead of 50).
                                 </p>
                             </div>
                             <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        New
-                                    </div>
-                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">New ways to get value and earn points</h4>
-                                </div>
+                                <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.4rem 0;">New ways to get value and earn points</h4>
                                 <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">
                                     Roadmaps, certification-circles and more. Check 'guidelines' section for more details.
                                 </p>
                             </div>
                             <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        New
-                                    </div>
-                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">Promoted certifications launch</h4>
-                                </div>
+                                <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.4rem 0;">Promoted certifications launch</h4>
                                 <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">
                                     All GCP certifications now offer 10% bonus points! Get more value from your Google Cloud Platform certifications and accelerate your level progression.
                                 </p>
                             </div>
                             <div style="background: var(--glass-elevated); backdrop-filter: var(--blur-light); border: 1px solid var(--glass-border); border-radius: 0.6rem; padding: 0.8rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-                                    <div style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; padding: 0.1rem 0.3rem; border-radius: 0.4rem; font-size: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        New
-                                    </div>
-                                    <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0;">Miluim</h4>
-                                </div>
+                                <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.4rem 0;">Miluim</h4>
                                 <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; font-size: 0.8rem;">
                                     Thanks for the service! New conditions for DCR for reservists. Check the 'guidelines' section for more details.
                                 </p>
@@ -1383,9 +1378,9 @@ function renderAchievements(category) {
                                                         <span style="font-size: 0.75rem; color: var(--text-muted); text-decoration: line-through;">${
                                                           item.points
                                                         }</span>
-                                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--success-color);">${Math.round(
-                                                          item.points * 1.1
-                                                        )} points</span>
+                                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--success-color);">${
+                                                          item.promotedPoints || Math.round(item.points * 1.1)
+                                                        } points</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1646,9 +1641,9 @@ function renderAchievements(category) {
                         achievement.promoted
                           ? `<span class="old-points">${
                               achievement.points
-                            }</span> <span class="new-points">${Math.round(
-                              achievement.points * 1.1
-                            )} points</span>`
+                            }</span> <span class="new-points">${
+                              achievement.promotedPoints || Math.round(achievement.points * 1.1)
+                            } points</span>`
                           : `${achievement.points} points`
                       }</p>`
                 }
@@ -1912,7 +1907,7 @@ function showDetails(achievementId) {
   }
 
   const displayPoints = achievement.promoted
-    ? Math.round(achievement.points * 1.1)
+    ? (achievement.promotedPoints || Math.round(achievement.points * 1.1))
     : achievement.points;
   document.getElementById(
     "detailsPoints"

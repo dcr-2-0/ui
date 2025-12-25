@@ -272,6 +272,35 @@
     },
     {
       "id": 16,
+      "title": "AWS Certified Generative AI Developer - Professional",
+      "points": 400,
+      "promoted": true,
+      "icon": "https://images.credly.com/size/340x340/images/52c6e5ac-9516-4944-a4df-e31b23c9bbf2/blob",
+      "duration": "205 minutes",
+      "price": "$150",
+      "passingGrade": "750/1000 (scaled score)",
+      "description": "Design and implement generative AI solutions on AWS. Master foundation models, prompt engineering, and responsible AI practices.",
+      "skills": [
+        "Generative AI Fundamentals",
+        "Foundation Models",
+        "Prompt Engineering",
+        "RAG Architecture",
+        "Model Training & Fine-tuning",
+        "Responsible AI"
+      ],
+      "provider": "Amazon Web Services",
+      "examCode": "AIP-C01",
+      "questionCount": "85 questions",
+      "questionTypes": "Multiple choice and multiple response",
+      "proctored": true,
+      "validity": "3 years",
+      "prerequisites": "None",
+      "retakePolicy": "14 days wait period, no limit on attempts",
+      "officialUrl": "https://aws.amazon.com/certification/certified-generative-ai-developer-professional/",
+      "promotedPoints": 500
+    },
+    {
+      "id": 17,
       "title": "AWS Certified Advanced Networking Speciality",
       "points": 400,
       "icon": "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Advanced-Networking-Specialty_badge.e09a4e04210dd4dd57ace21344af66986d4b4dc7.png",
@@ -296,7 +325,7 @@
       "officialUrl": "https://aws.amazon.com/certification/certified-advanced-networking-specialty/"
     },
     {
-      "id": 17,
+      "id": 18,
       "title": "AWS Certified Machine Learning Speciality",
       "points": 400,
       "icon": "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Machine-Learning-Specialty_badge.e5d66b56552bbf046f905bacaecef6dad0ae7180.png",
@@ -321,7 +350,7 @@
       "officialUrl": "https://aws.amazon.com/certification/certified-machine-learning-specialty/"
     },
     {
-      "id": 18,
+      "id": 19,
       "title": "AWS Certified Security Speciality",
       "points": 350,
       "icon": "https://d1.awsstatic.com/training-and-certification/certification-badges/AWS-Certified-Security-Specialty_badge.75ad1e505c0241bdb321f4c4d9abc51c0109c54f.png",
@@ -347,7 +376,7 @@
       "officialUrl": "https://aws.amazon.com/certification/certified-security-specialty/"
     },
     {
-      "id": 19,
+      "id": 20,
       "title": "Azure Administrator Associate",
       "points": 200,
       "icon": "https://img-c.udemycdn.com/open-badges/v2/badge-class/2082659861/azure-administrator-associate-600x60014067246547753667656.png",
@@ -373,7 +402,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-administrator/"
     },
     {
-      "id": 20,
+      "id": 21,
       "title": "Azure Developer",
       "points": 200,
       "icon": "https://www.glasspaper.no/globalassets/it-pro-kategori-sider/microsoft/azure-developer-associate.png",
@@ -398,7 +427,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-developer/"
     },
     {
-      "id": 21,
+      "id": 22,
       "title": "Azure Fundamentals",
       "points": 50,
       "icon": "https://images.credly.com/size/680x680/images/be8fcaeb-c769-4858-b567-ffaaa73ce8cf/image.png",
@@ -423,7 +452,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-fundamentals/"
     },
     {
-      "id": 22,
+      "id": 23,
       "title": "Azure Data Scientist",
       "points": 300,
       "icon": "https://images.credly.com/images/5c8fca38-b0d2-49e5-9ad2-f3f8e79b327f/azure-data-scientist-associate-600x600.png",
@@ -449,7 +478,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-data-scientist/"
     },
     {
-      "id": 23,
+      "id": 24,
       "title": "Azure Security Engineer",
       "points": 300,
       "icon": "https://images.credly.com/images/1ad16b6f-2c71-4a2e-ae74-ec69c4766039/azure-security-engineer-associate600x600.png",
@@ -474,7 +503,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-security-engineer/"
     },
     {
-      "id": 24,
+      "id": 25,
       "title": "Azure Solutions Architect Expert",
       "points": 450,
       "icon": "https://kevinhakanson.com/static/3e970253558c410b2fe0d1a7cefa8f3d/0a47e/azure-solutions-architect-expert-600x600.png",
@@ -500,7 +529,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-solutions-architect/"
     },
     {
-      "id": 25,
+      "id": 26,
       "title": "Azure DevOps Engineer Expert",
       "points": 450,
       "icon": "https://i0.wp.com/www.kevinrchant.com/wp-content/uploads/2020/06/microsoft-certified-devops-engineer-expert.png?fit=600%2C600&ssl=1",
@@ -526,7 +555,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/devops-engineer/"
     },
     {
-      "id": 26,
+      "id": 27,
       "title": "GCP Associate Cloud Engineer",
       "points": 250,
       "icon": "https://images.credly.com/size/680x680/images/08096465-cbfc-4c3e-93e5-93c5aa61f23e/image.png",
@@ -553,7 +582,7 @@
       "officialUrl": "https://cloud.google.com/learn/certification/cloud-engineer"
     },
     {
-      "id": 27,
+      "id": 28,
       "title": "GCP Cloud Database Engineer",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/275e69a5-33a8-4d9c-bad4-2bdc0dfb7d40/image.png",
@@ -571,7 +600,7 @@
       "provider": "Google Cloud"
     },
     {
-      "id": 28,
+      "id": 29,
       "title": "GCP Professional Cloud DevOps Engineer",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/33f08b7e-fa6a-41cd-810a-21cc1c336f6d/image.png",
@@ -597,7 +626,7 @@
       "officialUrl": "https://cloud.google.com/learn/certification/cloud-devops-engineer"
     },
     {
-      "id": 29,
+      "id": 30,
       "title": "GCP Cloud Architect Professional",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/71c579e0-51fd-4247-b493-d2fa8167157a/image.png",
@@ -624,7 +653,7 @@
       "officialUrl": "https://cloud.google.com/learn/certification/cloud-architect"
     },
     {
-      "id": 30,
+      "id": 31,
       "title": "GCP Machine Learning Engineer",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/05e71e7e-92a1-4821-8530-4176b2e3c4b4/image.png",
@@ -643,7 +672,7 @@
       "provider": "Google Cloud"
     },
     {
-      "id": 31,
+      "id": 32,
       "title": "GCP Cloud Network Engineer",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/08a802bf-f2fa-44fb-8110-92acf6195738/image.png",
@@ -662,7 +691,7 @@
       "provider": "Google Cloud"
     },
     {
-      "id": 32,
+      "id": 33,
       "title": "GCP Data Engineer",
       "points": 400,
       "icon": "https://miro.medium.com/v2/resize:fit:520/1*7nTsfZaGccJFKI8t7YyuPQ.png",
@@ -688,7 +717,7 @@
       "officialUrl": "https://cloud.google.com/learn/certification/data-engineer"
     },
     {
-      "id": 33,
+      "id": 34,
       "title": "GCP Security Engineer",
       "points": 350,
       "icon": "https://images.credly.com/size/680x680/images/4ea0ec5c-6258-4c26-9282-6ed233c0c7ac/image.png",
@@ -707,7 +736,7 @@
       "provider": "Google Cloud"
     },
     {
-      "id": 34,
+      "id": 35,
       "title": "CKA - Certified Kubernetes Administrator",
       "points": 200,
       "icon": "https://images.credly.com/size/680x680/images/8b8ed108-e77d-4396-ac59-2504583b9d54/cka_from_cncfsite__281_29.png",
@@ -733,7 +762,7 @@
       "officialUrl": "https://www.cncf.io/training/certification/cka/"
     },
     {
-      "id": 35,
+      "id": 36,
       "title": "CKS - Certified Kubernetes Security Specialist",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/9945dfcb-1cca-4529-85e6-db1be3782210/kubernetes-security-specialist-logo2.png",
@@ -760,7 +789,7 @@
       "officialUrl": "https://www.cncf.io/training/certification/cks/"
     },
     {
-      "id": 36,
+      "id": 37,
       "title": "HashiCorp Terraform Associate",
       "points": 100,
       "icon": "https://images.credly.com/size/340x340/images/0dc62494-dc94-469a-83af-e35309f27356/blob",
@@ -790,7 +819,7 @@
       "officialUrl": "https://developer.hashicorp.com/certifications/infrastructure-automation"
     },
     {
-      "id": 37,
+      "id": 38,
       "title": "Terraform Authoring and Operations Professional",
       "points": 250,
       "icon": "https://images.credly.com/size/340x340/images/a4c6650b-58c3-4be5-bdb0-4d1f437d4e40/blob",
@@ -820,7 +849,7 @@
       "officialUrl": "https://developer.hashicorp.com/certifications/infrastructure-automation"
     },
     {
-      "id": 38,
+      "id": 39,
       "title": "HashiCorp Vault Associate",
       "points": 100,
       "icon": "https://images.credly.com/size/340x340/images/d5bf51f3-18cd-4a7a-8031-e2e365ebb0ba/blob",
@@ -851,7 +880,7 @@
       "officialUrl": "https://developer.hashicorp.com/certifications/security-automation"
     },
     {
-      "id": 39,
+      "id": 40,
       "title": "GitHub Foundations",
       "points": 50,
       "icon": "https://images.credly.com/size/680x680/images/024d0122-724d-4c5a-bd83-cfe3c4b7a073/image.png",
@@ -877,7 +906,7 @@
       "officialUrl": "https://examregistration.github.com/certification/GHF"
     },
     {
-      "id": 40,
+      "id": 41,
       "title": "GitHub Copilot",
       "points": 50,
       "icon": "https://images.credly.com/size/680x680/images/6b924fae-3cd7-4233-b012-97413c62c85d/blob",
@@ -903,7 +932,7 @@
       "officialUrl": "https://examregistration.github.com/certification/COPILOT"
     },
     {
-      "id": 41,
+      "id": 42,
       "title": "GitHub Advanced Security",
       "points": 100,
       "icon": "https://images.credly.com/size/680x680/images/c9ed294b-f8ac-48fa-a8c3-96dab1f110f2/image.png",
@@ -929,7 +958,7 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/github-advanced-security/"
     },
     {
-      "id": 42,
+      "id": 43,
       "title": "GitHub Actions",
       "points": 125,
       "icon": "https://images.credly.com/size/680x680/images/89efc3e7-842b-4790-b09b-9ea5efc71ec3/image.png",
@@ -955,7 +984,7 @@
       "officialUrl": "https://examregistration.github.com/certification/ACTIONS"
     },
     {
-      "id": 43,
+      "id": 44,
       "title": "GitHub Administration",
       "points": 125,
       "icon": "https://images.credly.com/size/680x680/images/34880f37-8ec8-4542-a78a-73ba6647208e/image.png",
@@ -981,7 +1010,34 @@
       "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/github-administration/"
     },
     {
-      "id": 44,
+      "id": 45,
+      "title": "GitLab Certified CI/CD Associate",
+      "points": 70,
+      "icon": "https://images.credly.com/size/340x340/images/036c3660-a71c-4838-953b-9fa25abc71bc/image.png",
+      "duration": "75 minutes",
+      "price": "$150",
+      "passingGrade": "75%",
+      "description": "Demonstrate expertise in GitLab CI/CD pipelines, automation, and DevOps workflows. Master continuous integration and delivery practices.",
+      "skills": [
+        "GitLab CI/CD",
+        "Pipeline Configuration",
+        "Job Execution",
+        "Artifacts & Dependencies",
+        "DevOps Workflows",
+        "Automation"
+      ],
+      "provider": "GitLab",
+      "examCode": "N/A",
+      "questionCount": "50 questions",
+      "questionTypes": "Multiple choice or multiple response",
+      "proctored": false,
+      "validity": "No expiration",
+      "prerequisites": "None",
+      "retakePolicy": "Free 2nd attempt",
+      "officialUrl": "https://university.gitlab.com/courses/gitlab-certified-cicd-associate"
+    },
+    {
+      "id": 46,
       "title": "Prometheus Certified Associate (PCA)",
       "points": 100,
       "icon": "https://images.credly.com/size/680x680/images/c34436dc-1cfd-4125-a862-35f9c86ca17f/image.png",
@@ -1007,7 +1063,7 @@
       "officialUrl": "https://www.cncf.io/training/certification/pca/"
     },
     {
-      "id": 45,
+      "id": 47,
       "title": "GitOps Fundamentals",
       "points": 50,
       "icon": "https://images.credly.com/size/340x340/images/fbd71e9c-07f7-4a8b-a874-2bf5001a6dbf/blob",
@@ -1033,7 +1089,7 @@
       "officialUrl": "https://learning.codefresh.io/course/gitops-fundamentals"
     },
     {
-      "id": 46,
+      "id": 48,
       "title": "GitOps at Scale",
       "points": 90,
       "icon": "https://images.credly.com/size/340x340/images/89046afe-b82b-4dc1-9c20-384ea505fd01/blob",
@@ -1059,7 +1115,7 @@
       "officialUrl": "https://learning.codefresh.io/"
     },
     {
-      "id": 47,
+      "id": 49,
       "title": "GitOps Enterprise",
       "points": 120,
       "icon": "https://images.credly.com/size/340x340/images/7d2c6621-0b7f-46e6-a56b-f69143812011/blob",
@@ -1085,7 +1141,7 @@
       "officialUrl": "https://learning.octopus.com/course/gitops-enterprise"
     },
     {
-      "id": 48,
+      "id": 50,
       "title": "FinOps Certified Practitioner (FOCP)",
       "points": 100,
       "icon": "https://images.credly.com/size/680x680/images/08a5010a-0c0a-448c-981e-c116fedd380c/image.png",
@@ -1111,7 +1167,7 @@
       "officialUrl": "https://learn.finops.org/finops-certified-practitioner-certification-exam"
     },
     {
-      "id": 49,
+      "id": 51,
       "title": "FinOps Certified Engineer",
       "points": 100,
       "icon": "https://images.credly.com/size/680x680/images/90c78afd-e885-4525-8f5e-e5834d8cb13d/image.png",
@@ -1137,7 +1193,7 @@
       "officialUrl": "https://learn.finops.org/finops-certified-engineer-certification-exam"
     },
     {
-      "id": 50,
+      "id": 52,
       "title": "FinOps Certified Professional",
       "points": 400,
       "icon": "https://images.credly.com/size/680x680/images/5f226770-5930-4afd-b040-8bf266b50f8e/image.png",
@@ -1163,7 +1219,36 @@
       "officialUrl": "https://learn.finops.org/finops-professional-certified-exam"
     },
     {
-      "id": 51,
+      "id": 53,
+      "title": "Cast AI APA Hero",
+      "points": 60,
+      "promoted": true,
+      "promotedPoints": 80,
+      "icon": "https://media.licdn.com/dms/image/v2/D4D22AQF1TfSt6VZGmw/feedshare-shrink_2048_1536/B4DZqgPFyhJMAw-/0/1763624902637?e=1768435200&v=beta&t=HV4LDk7wLTsYf89ps8tg_7onMoZZW3CG-2LwTnk8BWg",
+      "duration": "No time limit",
+      "price": "Free",
+      "passingGrade": "Pass/Fail",
+      "description": "Demonstrate expertise in Kubernetes cost optimization using Cast AI. Master automated optimization, resource management, and cloud cost efficiency.",
+      "skills": [
+        "Kubernetes Cost Optimization",
+        "Cloud Resource Management",
+        "Automated Scaling",
+        "Cost Analysis",
+        "Performance Optimization",
+        "Cast AI Platform"
+      ],
+      "provider": "Cast AI",
+      "examCode": "N/A",
+      "questionCount": "N/A",
+      "questionTypes": "Multiple choice and lab",
+      "proctored": false,
+      "validity": "No expiration",
+      "prerequisites": "None",
+      "retakePolicy": "Unlimited retakes",
+      "officialUrl": "https://cast.ai/apa-hero/"
+    },
+    {
+      "id": 54,
       "title": "CompTIA Network+ ce",
       "points": 150,
       "icon": "https://images.credly.com/size/680x680/images/c70ba73e-3c8a-46fa-9d60-4a9af94ad662/blob",
@@ -1189,7 +1274,7 @@
       "officialUrl": "https://www.comptia.org/certifications/network"
     },
     {
-      "id": 52,
+      "id": 55,
       "title": "Professional Scrum Master I (PSM-I)",
       "points": 100,
       "icon": "https://images.credly.com/size/680x680/images/a2790314-008a-4c3d-9553-f5e84eb359ba/image.png",
@@ -1217,19 +1302,19 @@
   ],
   "knowledge-unlock": [
     {
-      "id": 101,
+      "id": 104,
       "title": "Case Study",
       "points": 20,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
       "duration": "N/A",
       "price": "N/A",
       "passingGrade": "N/A",
-      "description": "A case study article that shares knowledge of a case that happened. Can be internal (notion). Must be published to all develeap so people will learn from others.\n\nExamples: <a href=\"https://www.notion.so/develeap/Case-Studies-7f52c9d6b00c4995a1e8d252c947ab22\" target=\"_blank\" rel=\"noopener\">Case Studies Collection →</a>",
+      "description": "A case study article that shares knowledge of a case that happened. Can be internal (notion). Must be published to all develeap so people will learn from others.\n\nExamples: <a href=\"https://www.notion.so/develeap/Case-Studies-7f52c9d6b00c4995a1e8d252c947ab22\" target=\"_blank\" rel=\"noopener\">Case Studies Collection \u2192</a>",
       "skills": [],
       "provider": "Knowledge Sharing"
     },
     {
-      "id": 102,
+      "id": 105,
       "title": "Innovative Idea",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1241,7 +1326,7 @@
       "provider": "Innovation"
     },
     {
-      "id": 103,
+      "id": 106,
       "title": "Internal Lecture",
       "points": 50,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1253,7 +1338,7 @@
       "provider": "Education"
     },
     {
-      "id": 104,
+      "id": 107,
       "title": "Public Lecture",
       "points": 90,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1265,7 +1350,7 @@
       "provider": "Public Speaking"
     },
     {
-      "id": 107,
+      "id": 110,
       "title": "Tech-Tuesday Lecture",
       "points": 90,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1277,7 +1362,7 @@
       "provider": "Public Speaking"
     },
     {
-      "id": 105,
+      "id": 108,
       "title": "Publish external article (outside magazine)",
       "points": 25,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1289,7 +1374,7 @@
       "provider": "Content Creation"
     },
     {
-      "id": 106,
+      "id": 109,
       "title": "Publish an article to develeap magazine",
       "points": 50,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1301,7 +1386,7 @@
       "provider": "Develeap Magazine"
     },
     {
-      "id": 108,
+      "id": 111,
       "title": "Recording lecture for course",
       "points": 200,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1313,7 +1398,7 @@
       "provider": "Course Creation"
     },
     {
-      "id": 109,
+      "id": 112,
       "title": "Creating Course chapter",
       "points": 600,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1325,7 +1410,7 @@
       "provider": "Course Creation"
     },
     {
-      "id": 110,
+      "id": 113,
       "title": "(AWS) case study",
       "points": 70,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1337,7 +1422,7 @@
       "provider": "AWS Case Studies"
     },
     {
-      "id": 211,
+      "id": 214,
       "title": "Podcast management",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1351,7 +1436,7 @@
   ],
   "collaboration": [
     {
-      "id": 201,
+      "id": 204,
       "title": "Interview Training (interviewer)",
       "points": 30,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1363,7 +1448,7 @@
       "provider": "Training"
     },
     {
-      "id": 202,
+      "id": 205,
       "title": "DevOps candidates review",
       "points": 30,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1375,7 +1460,7 @@
       "provider": "HR Coordination"
     },
     {
-      "id": 203,
+      "id": 206,
       "title": "Peer Code Reviewee",
       "points": 10,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1387,7 +1472,7 @@
       "provider": "Code Review"
     },
     {
-      "id": 204,
+      "id": 207,
       "title": "Peer Code Reviewer",
       "points": 10,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1399,7 +1484,7 @@
       "provider": "Code Review"
     },
     {
-      "id": 205,
+      "id": 208,
       "title": "Architecture: Analyze, Create, Mentor & Present",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1411,7 +1496,7 @@
       "provider": "Architecture"
     },
     {
-      "id": 207,
+      "id": 210,
       "title": "Buddies",
       "points": 40,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1423,19 +1508,19 @@
       "provider": "Mentorship"
     },
     {
-      "id": 210,
+      "id": 213,
       "title": "AWS Hero",
       "points": 1000,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
       "duration": "N/A",
       "price": "N/A",
       "passingGrade": "N/A",
-      "description": "Become an AWS Hero - a recognition for technical experts and thought leaders in the AWS community.\n\n<a href=\"https://aws.amazon.com/developer/community/heroes/?community-heroes-all.sort-by=item.additionalFields.sortPosition&community-heroes-all.sort-order=asc&awsf.filter-hero-category=*all&awsf.filter-location=*all&awsf.filter-year=*all&awsf.filter-activity=*all\" target=\"_blank\" rel=\"noopener\">AWS Heroes Program →</a>",
+      "description": "Become an AWS Hero - a recognition for technical experts and thought leaders in the AWS community.\n\n<a href=\"https://aws.amazon.com/developer/community/heroes/?community-heroes-all.sort-by=item.additionalFields.sortPosition&community-heroes-all.sort-order=asc&awsf.filter-hero-category=*all&awsf.filter-location=*all&awsf.filter-year=*all&awsf.filter-activity=*all\" target=\"_blank\" rel=\"noopener\">AWS Heroes Program \u2192</a>",
       "skills": [],
       "provider": "AWS Community"
     },
     {
-      "id": 212,
+      "id": 215,
       "title": "Internal project management",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1447,7 +1532,7 @@
       "provider": "Project Management"
     },
     {
-      "id": 213,
+      "id": 216,
       "title": "AWS service delivery process",
       "points": 70,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1459,7 +1544,7 @@
       "provider": "AWS Partnership"
     },
     {
-      "id": 214,
+      "id": 217,
       "title": "DevOps Evening Course Q&A",
       "points": 40,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1471,7 +1556,7 @@
       "provider": "Education Support"
     },
     {
-      "id": 215,
+      "id": 218,
       "title": "Bootcamp lecture",
       "points": 50,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1483,7 +1568,7 @@
       "provider": "Bootcamp"
     },
     {
-      "id": 216,
+      "id": 219,
       "title": "Bootcamp Q&A session",
       "points": 25,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1495,7 +1580,7 @@
       "provider": "Bootcamp Support"
     },
     {
-      "id": 217,
+      "id": 220,
       "title": "Bootcamp interview",
       "points": 15,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/images/develeap_transparent-Photoroom.png",
@@ -1551,7 +1636,7 @@
   ],
   "roadmaps": [
     {
-      "id": 301,
+      "id": 304,
       "title": "DevOps & Cloud Associate",
       "points": 50,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/1.png",
@@ -1577,7 +1662,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 302,
+      "id": 305,
       "title": "DevOps & Cloud Expert",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/2.png",
@@ -1603,7 +1688,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 303,
+      "id": 306,
       "title": "Multi Cloud Associate",
       "points": 70,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/3.png",
@@ -1629,7 +1714,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 304,
+      "id": 307,
       "title": "Multi Cloud Expert",
       "points": 150,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/4.png",
@@ -1655,7 +1740,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 305,
+      "id": 308,
       "title": "GitHub Expert",
       "points": 45,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/5.png",
@@ -1681,7 +1766,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 306,
+      "id": 309,
       "title": "K8S Expert",
       "points": 60,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/6.png",
@@ -1707,7 +1792,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 307,
+      "id": 310,
       "title": "AWS Expert - Pro",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/7.png",
@@ -1733,7 +1818,7 @@
       "officialUrl": "https://www.develeap.com"
     },
     {
-      "id": 308,
+      "id": 311,
       "title": "AWS Expert - Specialist",
       "points": 100,
       "icon": "https://s3.us-east-1.amazonaws.com/dcr-2.0/badges_images/8.png",
@@ -1790,7 +1875,7 @@
       "title": "Quarterly Celebration Points & Payouts",
       "points": [
         "Q1 (January-March): Received in April salary, at the beginning of May",
-        "Q2 (April-June): Received in July salary, at the beginning of August", 
+        "Q2 (April-June): Received in July salary, at the beginning of August",
         "Q3 (July-September): Received in October salary, at the beginning of November",
         "Q4 (October-December): Received in January salary, at the beginning of February",
         "During celebration points, leveled-up consultants are celebrated and backlog is reset",
@@ -1816,7 +1901,7 @@
       "points": [
         "Level 1-2: 850 points required for each level",
         "Level 3-4: 1000 points required for each level",
-        "Level 5-6: 1200 points required for each level", 
+        "Level 5-6: 1200 points required for each level",
         "Level 7-8: 1500 points required for each level",
         "Level 9-10: 1700 points required for each level",
         "Excess points are saved for the next level - points are never wasted!",
@@ -1841,7 +1926,7 @@
       "title": "Certification Circles",
       "points": [
         "Study groups for certifications worth 130+ points",
-        "Must declare participation in the first month of each quarter", 
+        "Must declare participation in the first month of each quarter",
         "Bonus points distributed based on group size and completion percentage",
         "Special bonus: Miluimnik participants add 5% extra points to all circle members (max 2 per circle)",
         "Use the certification-circle form to announce and organize groups"
@@ -1966,14 +2051,14 @@
     {
       "id": 1,
       "title": "Suggest new item",
-      "icon": "💡",
+      "icon": "\ud83d\udca1",
       "description": "Suggest new certifications, courses, or achievements to be added to the DCR system.",
       "googleFormUrl": "https://docs.google.com/forms/d/e/1FAIpQLSc_XNTL4AI8mYer5aiveY7y0sQz9S4fr_lb6Ji2I2QyqXl7WQ/viewform?embedded=true"
     },
     {
       "id": 2,
       "title": "Announce certification-circle",
-      "icon": "👥",
+      "icon": "\ud83d\udc65",
       "description": "Announce and organize certification study groups with colleagues for bonus points.",
       "googleFormUrl": "https://docs.google.com/forms/d/e/1FAIpQLSdP11n2qWK6LJMlVbrlrSWDgSWeTmllnWy3DyGQNG5dBks9zA/viewform?embedded=true"
     }

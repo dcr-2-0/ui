@@ -13,7 +13,8 @@
 </head>
 <body>
     <div class="app-container">
-        <aside class="sidebar">
+        <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay" onclick="toggleMobileMenu()"></div>
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo" onclick="showCategory('main')" style="cursor: pointer;">
                     DCR<span id="typedText"></span><span class="cursor">|</span>
@@ -94,6 +95,9 @@
         <main class="main-container">
             <header class="header">
                 <div class="header-content">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+                        <i class="ri-menu-line"></i>
+                    </button>
                     <h2 class="category-title" id="categoryTitle">Welcome to DCR 2.0</h2>
                 </div>
             </header>

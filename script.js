@@ -86,7 +86,12 @@ function addToCart(achievementId) {
 }
 
 function removeFromCart(achievementId) {
-  cartItems = cartItems.filter((item) => item.id !== achievementId);
+  // Find and remove the item from the cart array
+  const index = cartItems.findIndex((item) => item.id === achievementId);
+  if (index !== -1) {
+    cartItems.splice(index, 1);
+  }
+
   updateCartDisplay();
   updateMenuCartSummary();
 
@@ -372,7 +377,26 @@ async function loadAchievements() {
 
 let currentCategory = "main";
 
+// Toggle mobile menu
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileSidebarOverlay');
+
+  if (sidebar && overlay) {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+  }
+}
+
 function showCategory(category) {
+  // Close mobile menu when navigating to a new category
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileSidebarOverlay');
+  if (sidebar && overlay) {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+
   currentCategory = category;
 
   document.querySelectorAll(".nav-link").forEach((link) => {

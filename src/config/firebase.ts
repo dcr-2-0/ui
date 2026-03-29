@@ -5,11 +5,11 @@ import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDQpJ4othKGyeXBy55pgA_DYY3kw4YCv-k",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: "dcr-portal-f8df5",
   storageBucket: "dcr-portal-f8df5.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: "G-Q60R20L844"
 };
 

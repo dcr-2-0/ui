@@ -1,0 +1,177 @@
+.guidelines-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Controls */
+.guidelines-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.guidelines-toggle-btn {
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.guidelines-toggle-btn:hover {
+    background: var(--glass-hover);
+    color: var(--text-secondary);
+}
+
+/* List */
+.guidelines-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Card */
+.guideline-card {
+    background: var(--glass-elevated);
+    backdrop-filter: var(--blur-light);
+    -webkit-backdrop-filter: var(--blur-light);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.guideline-card.open {
+    box-shadow: var(--shadow-medium);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Header (clickable) */
+.guideline-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    text-align: left;
+    transition: background 0.2s ease;
+}
+
+.guideline-header:hover {
+    background: var(--glass-hover);
+}
+
+.guideline-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-color), #6366f1);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.guideline-icon {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.guideline-card.open .guideline-icon {
+    color: var(--accent-color);
+}
+
+.guideline-title {
+    flex: 1;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.guideline-chevron {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.guideline-chevron.rotated {
+    transform: rotate(180deg);
+}
+
+/* Body (collapsible) */
+.guideline-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.guideline-body.open {
+    grid-template-rows: 1fr;
+}
+
+.guideline-body-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.guideline-points {
+    list-style: none;
+    margin: 0;
+    padding: 0 1.5rem 1.25rem;
+    padding-left: calc(1.5rem + 28px + 1rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.guideline-point {
+    position: relative;
+    padding-left: 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.guideline-point::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .guideline-header {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .guideline-points {
+        padding-left: calc(1rem + 28px + 0.75rem);
+        padding-right: 1rem;
+    }
+
+    .guideline-title {
+        font-size: 0.95rem;
+    }
+}

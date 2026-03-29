@@ -1,0 +1,222 @@
+.command-palette-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20vh;
+    animation: overlayFadeIn 0.15s ease;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.command-palette {
+    width: 560px;
+    max-width: 90vw;
+    background: var(--glass-elevated);
+    backdrop-filter: var(--blur-heavy);
+    -webkit-backdrop-filter: var(--blur-heavy);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-heavy), 0 0 0 1px var(--glass-border);
+    overflow: hidden;
+    animation: paletteScaleIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes paletteScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Animated top border */
+.command-palette::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #10b981, #3b82f6, #f59e0b, #ef4444, #10b981);
+    background-size: 200% 100%;
+    animation: gradientShimmer 3s ease infinite;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.command-palette-input-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--glass-border);
+    gap: 0.75rem;
+}
+
+.command-palette-search-icon {
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.command-palette-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.command-palette-input::placeholder {
+    color: var(--text-muted);
+}
+
+.command-palette-kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    flex-shrink: 0;
+}
+
+.command-palette-results {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.command-palette-results::-webkit-scrollbar {
+    width: 4px;
+}
+
+.command-palette-results::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.command-palette-results::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 2px;
+}
+
+.command-palette-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.925rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: all 0.1s ease;
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+    background: var(--glass-hover);
+    color: var(--text-primary);
+}
+
+.command-palette-item.selected {
+    box-shadow: var(--shadow-light);
+}
+
+.command-palette-item-icon {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.command-palette-item.selected .command-palette-item-icon,
+.command-palette-item:hover .command-palette-item-icon {
+    color: var(--accent-color);
+}
+
+.command-palette-item-label {
+    flex: 1;
+}
+
+.command-palette-highlight {
+    background: var(--accent-glow);
+    color: var(--accent-color);
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+.command-palette-category {
+    padding: 0.5rem 0.75rem 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.command-palette-item-type {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    flex-shrink: 0;
+}
+
+.command-palette-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Keyboard shortcut hint for header */
+.cmd-k-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cmd-k-hint:hover {
+    background: var(--glass-hover);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-light);
+}

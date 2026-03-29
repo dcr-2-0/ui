@@ -1,0 +1,205 @@
+/* Dev Panel — fixed bottom-left corner, only visible in dev mode */
+
+.dev-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 9999;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+/* Collapsed toggle button */
+.dev-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(124, 58, 237, 0.85);
+  color: #fff;
+  border: 1px solid rgba(139, 92, 246, 0.6);
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.dev-panel__toggle:hover {
+  background: rgba(124, 58, 237, 1);
+}
+
+.dev-panel__pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Expanded body */
+.dev-panel__body {
+  margin-top: 6px;
+  width: 280px;
+  background: var(--glass-elevated);
+  border: 1.5px solid rgba(139, 92, 246, 0.35);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dev-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dev-panel__title {
+  font-weight: 700;
+  font-size: 13px;
+  color: rgba(139, 92, 246, 1);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dev-panel__disable {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 16px;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.dev-panel__disable:hover {
+  color: #ef4444;
+}
+
+.dev-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dev-panel__label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.dev-panel__hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dev-panel__select,
+.dev-panel__input {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.dev-panel__select:focus,
+.dev-panel__input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.dev-panel__desc {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.dev-panel__badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dev-panel__badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--glass-bg-light);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.dev-panel__badge--employee { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
+.dev-panel__badge--team_leader { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); }
+.dev-panel__badge--admin { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+.dev-panel__badge--approved { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+.dev-panel__badge--pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+.dev-panel__badge--rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+
+.dev-panel__clear-date {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: inherit;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.15s;
+}
+
+.dev-panel__clear-date:hover {
+  color: #ef4444;
+}
+
+.dev-panel__uid {
+  color: var(--text-muted);
+  font-size: 10px;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 8px;
+}
+
+.dev-panel__uid code {
+  color: rgba(139, 92, 246, 0.9);
+}
+
+.dev-panel__reset {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+
+.dev-panel__reset:hover {
+  background: rgba(239, 68, 68, 0.2);
+}

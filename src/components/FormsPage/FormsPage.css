@@ -1,0 +1,197 @@
+/* ── Cards grid view ── */
+.forms-grid-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.forms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* Card */
+.form-card {
+    background: var(--glass-elevated);
+    backdrop-filter: var(--blur-light);
+    -webkit-backdrop-filter: var(--blur-light);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    width: 100%;
+}
+
+.form-card:hover:not(.coming-soon) {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-heavy);
+    border-color: var(--accent-color);
+}
+
+.form-card.coming-soon {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.coming-soon-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--warning-color);
+    color: #fff;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.form-card-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-card-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.form-card-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+}
+
+.form-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background 0.2s ease;
+    margin-top: auto;
+}
+
+.form-card:hover:not(.coming-soon) .form-card-action {
+    background: #2563eb;
+}
+
+.form-card-placeholder {
+    padding: 1rem;
+    background: var(--glass-surface);
+    border-radius: 0.5rem;
+    border: 1px dashed var(--glass-border);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: auto;
+}
+
+/* ── Individual form view ── */
+.forms-individual {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    margin-bottom: 2rem;
+}
+
+.back-btn:hover {
+    background: var(--glass-hover);
+    box-shadow: var(--shadow-light);
+}
+
+.form-hero {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-hero-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.form-hero-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.form-hero-desc {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.form-embed-wrapper {
+    background: var(--glass-elevated);
+    backdrop-filter: var(--blur-light);
+    -webkit-backdrop-filter: var(--blur-light);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-medium);
+    overflow: hidden;
+}
+
+.form-embed {
+    display: block;
+    width: 100%;
+    height: 800px;
+    border: none;
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .forms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-embed {
+        height: 600px;
+    }
+
+    .form-hero-title {
+        font-size: 1.4rem;
+    }
+}

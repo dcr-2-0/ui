@@ -6,6 +6,24 @@ import { HR_EMAIL } from '../../data/hrConfig';
 import { levels } from '../../data/levels';
 import type { UserDocument, CatalogItem, LevelHistoryEntry, ProofEntry, LevelUpRequest } from '../../data/types';
 
+const PILLAR_ICON: Record<string, string> = {
+  tech: 'ri-computer-line',
+  professionalism: 'ri-shield-check-line',
+  'knowledge-unlock': 'ri-edit-line',
+  collaboration: 'ri-hearts-line',
+  roadmaps: 'ri-route-line',
+};
+
+const PILLAR_LABEL: Record<string, string> = {
+  tech: 'Tech',
+  professionalism: 'Professionalism',
+  'knowledge-unlock': 'Knowledge',
+  collaboration: 'Collaboration',
+  roadmaps: 'Roadmaps',
+};
+
+const PILLAR_ORDER = ['tech', 'knowledge-unlock', 'collaboration', 'professionalism', 'roadmaps'];
+
 function getQuarterFromDate(iso: string | undefined | null): string {
   const d = iso ? new Date(iso) : new Date();
   const q = Math.ceil((d.getMonth() + 1) / 3);
@@ -563,14 +581,21 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
             // Completion review card — TL verifies completed items and grants level-up
             const plan = member.plan;
             const allPlanItems = plan?.items ?? [];
+            const allPlanItemsWithKeys = allPlanItems.map((item, idx) => ({
+              item,
+              itemKey: item.planItemKey ?? `${item.id}-${idx}`,
+            }));
             const completedItemKeys = plan?.completedItemKeys ?? [];
             const completedItems = allPlanItems.filter((item, idx) => {
               const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
               return completedItemKeys.includes(itemKey);
             });
+            const planCarryOverPoints = plan?.carryOverPoints ?? 0;
+            const completedPts = completedItems.reduce((s, i) => s + (i.promotedPoints ?? i.points), 0);
+            const totalCompletedPts = completedPts + planCarryOverPoints;
             const prevLevel = member.currentLevel ?? 0;
             const targetLevel = plan?.selectedLevelId || prevLevel + 1;
-            const reqCheck = checkPlanRequirements(completedItems, targetLevel);
+            const reqCheck = checkPlanRequirements(completedItems, targetLevel, planCarryOverPoints);
 
             return (
               <div key={member.uid} className="approval-card">
@@ -620,38 +645,64 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                       Completed items
                       <span className="submission-count">{completedItems.length}/{allPlanItems.length}</span>
                     </div>
-                    {allPlanItems.length > 0 ? (
-                      <ul className="submission-certs">
-                        {allPlanItems.map((item, idx) => {
-                          const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
-                          const done = completedItemKeys.includes(itemKey);
-                          const proofs = plan?.proofEntries?.[itemKey] ?? [];
-                          const proofKey = `${member.uid}-${itemKey}`;
-                          const proofExpanded = expandedProofKey === proofKey;
-                          return (
-                            <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>
-                              <div className="cert-main">
-                                <i className={done ? 'ri-checkbox-circle-fill cert-done-icon' : 'ri-checkbox-blank-circle-line cert-todo-icon'}></i>
-                                <span className="cert-name">{item.name}</span>
-                                <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
-                                {proofs.length > 0 && (
-                                  <button
-                                    className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
-                                    onClick={() => toggleProofs(proofKey)}
-                                    title={proofExpanded ? 'Hide attachments' : 'View attachments'}
-                                  >
-                                    <i className="ri-attachment-2-line"></i> {proofs.length}
-                                    <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
-                                  </button>
-                                )}
-                              </div>
-                              {proofExpanded && renderProofEntries(proofs)}
-                            </li>
-                          );
-                        })}
-                      </ul>
+                    {allPlanItemsWithKeys.length > 0 ? (
+                      <div className="pillar-groups">
+                        {PILLAR_ORDER.filter((p) => allPlanItemsWithKeys.some(({ item }) => item.category === p)).map((pillar) => (
+                          <div key={pillar} className="pillar-group">
+                            <div className="pillar-group-header">
+                              <i className={PILLAR_ICON[pillar] ?? 'ri-star-line'}></i>
+                              {PILLAR_LABEL[pillar] ?? pillar}
+                            </div>
+                            <ul className="submission-certs">
+                              {allPlanItemsWithKeys.filter(({ item }) => item.category === pillar).map(({ item, itemKey }) => {
+                                const done = completedItemKeys.includes(itemKey);
+                                const proofs = plan?.proofEntries?.[itemKey] ?? [];
+                                const proofKey = `${member.uid}-${itemKey}`;
+                                const proofExpanded = expandedProofKey === proofKey;
+                                return (
+                                  <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>
+                                    <div className="cert-main">
+                                      <i className={done ? 'ri-checkbox-circle-fill cert-done-icon' : 'ri-checkbox-blank-circle-line cert-todo-icon'}></i>
+                                      <span className="cert-name">{item.name}</span>
+                                      <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
+                                      {proofs.length > 0 && (
+                                        <button
+                                          className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
+                                          onClick={() => toggleProofs(proofKey)}
+                                          title={proofExpanded ? 'Hide attachments' : 'View attachments'}
+                                        >
+                                          <i className="ri-attachment-2-line"></i> {proofs.length}
+                                          <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
+                                        </button>
+                                      )}
+                                    </div>
+                                    {proofExpanded && renderProofEntries(proofs)}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <span className="submission-empty">No items in plan</span>
+                    )}
+                    {allPlanItemsWithKeys.length > 0 && (
+                      <>
+                        <div className="plan-total-points">
+                          {planCarryOverPoints > 0 ? 'Completed items: ' : 'Total completed: '}<strong>{completedPts} pts</strong>
+                        </div>
+                        {planCarryOverPoints > 0 && (
+                          <>
+                            <div className="plan-total-points">
+                              Previous level carry-over: <strong>{planCarryOverPoints} pts</strong>
+                            </div>
+                            <div className="plan-total-points">
+                              Combined total: <strong>{totalCompletedPts} pts</strong>
+                            </div>
+                          </>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -697,6 +748,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
           if (quarterly) {
             // Quarterly plan approval card
             const planItems = member.plan?.items ?? [];
+            const planItemsWithKeys = planItems.map((item, idx) => ({
+              item,
+              itemKey: item.planItemKey ?? `${item.id}-${idx}`,
+            }));
             const planCarriedItems = member.plan?.carriedItems ?? [];
             const planCarryOverPoints = member.plan?.carryOverPoints ?? 0;
             const allPlanItems = [...planCarriedItems, ...planItems];
@@ -792,35 +847,44 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                         <span className="submission-count">{planItems.length}</span>
                       )}
                     </div>
-                    {planItems.length > 0 ? (
+                    {planItemsWithKeys.length > 0 ? (
                       <>
-                        <ul className="submission-certs">
-                          {planItems.map((item, idx) => {
-                            const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
-                            const proofs = member.plan?.proofEntries?.[itemKey] ?? [];
-                            const proofKey = `${member.uid}-plan-${itemKey}`;
-                            const proofExpanded = expandedProofKey === proofKey;
-                            return (
-                            <li key={itemKey} className="submission-cert-item">
-                              <div className="cert-main">
-                                <span className="cert-name">{item.name}</span>
-                                <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
-                                {proofs.length > 0 && (
-                                  <button
-                                    className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
-                                    onClick={() => toggleProofs(proofKey)}
-                                    title={proofExpanded ? 'Hide attachments' : 'View attachments'}
-                                  >
-                                    <i className="ri-attachment-2-line"></i> {proofs.length}
-                                    <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
-                                  </button>
-                                )}
+                        <div className="pillar-groups">
+                          {PILLAR_ORDER.filter((p) => planItemsWithKeys.some(({ item }) => item.category === p)).map((pillar) => (
+                            <div key={pillar} className="pillar-group">
+                              <div className="pillar-group-header">
+                                <i className={PILLAR_ICON[pillar] ?? 'ri-star-line'}></i>
+                                {PILLAR_LABEL[pillar] ?? pillar}
                               </div>
-                              {proofExpanded && renderProofEntries(proofs)}
-                            </li>
-                            );
-                          })}
-                        </ul>
+                              <ul className="submission-certs">
+                                {planItemsWithKeys.filter(({ item }) => item.category === pillar).map(({ item, itemKey }) => {
+                                  const proofs = member.plan?.proofEntries?.[itemKey] ?? [];
+                                  const proofKey = `${member.uid}-plan-${itemKey}`;
+                                  const proofExpanded = expandedProofKey === proofKey;
+                                  return (
+                                    <li key={itemKey} className="submission-cert-item">
+                                      <div className="cert-main">
+                                        <span className="cert-name">{item.name}</span>
+                                        <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
+                                        {proofs.length > 0 && (
+                                          <button
+                                            className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
+                                            onClick={() => toggleProofs(proofKey)}
+                                            title={proofExpanded ? 'Hide attachments' : 'View attachments'}
+                                          >
+                                            <i className="ri-attachment-2-line"></i> {proofs.length}
+                                            <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
+                                          </button>
+                                        )}
+                                      </div>
+                                      {proofExpanded && renderProofEntries(proofs)}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                         <div className="plan-total-points">
                           {planCarriedItems.length > 0 || planCarryOverPoints > 0 ? 'New items: ' : 'Total: '}<strong>{planItems.reduce((s, i) => s + (i.promotedPoints ?? i.points), 0)} pts</strong>
                         </div>

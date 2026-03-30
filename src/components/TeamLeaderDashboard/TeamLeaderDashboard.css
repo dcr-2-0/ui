@@ -959,6 +959,35 @@
   text-decoration: none;
 }
 
+/* Pillar grouping */
+.pillar-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pillar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pillar-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding-left: 0.25rem;
+}
+
+.pillar-group-header i {
+  font-size: 0.75rem;
+}
+
 /* Completion review item states */
 .submission-cert-item.cert-completed {
   border-color: rgba(20, 184, 166, 0.3);

@@ -568,6 +568,43 @@
 [data-theme='dark'] .req-fraction.req-close { color: #fcd34d; }
 [data-theme='dark'] .req-fraction.req-miss { color: #fca5a5; }
 
+.carry-over-row { opacity: 0.75; }
+.carry-over-pts { color: #a78bfa; font-weight: 600; }
+[data-theme='dark'] .carry-over-pts { color: #c4b5fd; }
+
+/* Pillar grouping */
+.pillar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+
+.pillar-group:last-child { margin-bottom: 0; }
+
+.pillar-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding-left: 0.25rem;
+}
+
+.pillar-group-header i { font-size: 0.75rem; }
+
+.modal-pillar-group-header {
+  padding: 0.2rem 0.5rem 0;
+}
+
+.modal-plan-items-grouped {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Mandatory checklist */
 .mandatory-checklist-label {
   font-size: 0.75rem;

@@ -20,6 +20,16 @@ const PILLAR_ICON: Record<string, string> = {
   roadmaps: 'ri-route-line',
 };
 
+const PILLAR_LABEL: Record<string, string> = {
+  tech: 'Tech',
+  professionalism: 'Professionalism',
+  'knowledge-unlock': 'Knowledge',
+  collaboration: 'Collaboration',
+  roadmaps: 'Roadmaps',
+};
+
+const PILLAR_ORDER = ['tech', 'knowledge-unlock', 'collaboration', 'professionalism', 'roadmaps'];
+
 export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<'plan' | 'plans' | 'summary'>('plan');
   const [showCertList, setShowCertList] = useState(false);
@@ -38,10 +48,9 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
   const planStatus = member.plan?.planStatus;
   const targetLevel =
     member.plan?.selectedLevelId || (member.currentLevel ? member.currentLevel + 1 : null);
-  const totalPoints = planItems.reduce(
-    (sum, item) => sum + (item.promotedPoints ?? item.points),
-    0,
-  );
+  const carryOverPoints = member.plan?.carryOverPoints ?? 0;
+  const totalPoints =
+    planItems.reduce((sum, item) => sum + (item.promotedPoints ?? item.points), 0) + carryOverPoints;
 
   // Pillar point breakdown from plan items
   const pillarPoints = { tech: 0, 'knowledge-unlock': 0, collaboration: 0 };
@@ -271,6 +280,15 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
                       {totalPoints} / {targetLevelData.points}
                     </span>
                   </div>
+                  {carryOverPoints > 0 && (
+                    <div className="requirement-row carry-over-row">
+                      <span className="req-row-label">
+                        <i className="ri-arrow-right-up-line"></i> Prev. level carry-over
+                      </span>
+                      <div className="req-progress-bar"></div>
+                      <span className="req-fraction carry-over-pts">+{carryOverPoints}</span>
+                    </div>
+                  )}
 
                   {/* Pillars */}
                   <div className="requirement-row">
@@ -353,18 +371,24 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
                     Plan Items
                     <span className="submission-count">{planItems.length}</span>
                   </div>
-                  <ul className="submission-certs">
-                    {planItems.map((item, i) => (
-                      <li key={`${item.id}-${i}`} className="submission-cert-item">
-                        <div className="cert-main">
-                          <span className="cert-name">{item.name}</span>
-                          <span className="cert-points">
-                            +{item.promotedPoints ?? item.points} pts
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  {PILLAR_ORDER.filter((p) => planItems.some((i) => i.category === p)).map((pillar) => (
+                    <div key={pillar} className="pillar-group">
+                      <div className="pillar-group-header">
+                        <i className={PILLAR_ICON[pillar] ?? 'ri-star-line'}></i>
+                        {PILLAR_LABEL[pillar] ?? pillar}
+                      </div>
+                      <ul className="submission-certs">
+                        {planItems.filter((i) => i.category === pillar).map((item, i) => (
+                          <li key={`${item.id}-${i}`} className="submission-cert-item">
+                            <div className="cert-main">
+                              <span className="cert-name">{item.name}</span>
+                              <span className="cert-points">+{item.promotedPoints ?? item.points} pts</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                   <p className="plan-total-points">Total: {totalPoints} points</p>
                 </div>
               ) : (
@@ -445,20 +469,29 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
                                 {entry.rejectionReason}
                               </div>
                             )}
-                            <ul className="modal-plan-items-list">
-                              {entry.items.map((item, idx) => {
-                                const pts = item.promotedPoints ?? item.points;
-                                return (
-                                  <li key={`${item.id}-${idx}`} className="modal-plan-item-row">
-                                    <i className={`${PILLAR_ICON[item.category] ?? 'ri-star-line'} modal-plan-item-icon`}></i>
-                                    <span className="modal-plan-item-name">{item.name}</span>
-                                    {pts > 0 && (
-                                      <span className="modal-plan-item-pts">+{pts.toLocaleString()}</span>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                            </ul>
+                            <div className="modal-plan-items-grouped">
+                              {PILLAR_ORDER.filter((p) => entry.items.some((i) => i.category === p)).map((pillar) => (
+                                <div key={pillar} className="pillar-group">
+                                  <div className="pillar-group-header modal-pillar-group-header">
+                                    <i className={PILLAR_ICON[pillar] ?? 'ri-star-line'}></i>
+                                    {PILLAR_LABEL[pillar] ?? pillar}
+                                  </div>
+                                  <ul className="modal-plan-items-list">
+                                    {entry.items.filter((i) => i.category === pillar).map((item, idx) => {
+                                      const pts = item.promotedPoints ?? item.points;
+                                      return (
+                                        <li key={`${item.id}-${idx}`} className="modal-plan-item-row">
+                                          <span className="modal-plan-item-name">{item.name}</span>
+                                          {pts > 0 && (
+                                            <span className="modal-plan-item-pts">+{pts.toLocaleString()}</span>
+                                          )}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </li>

@@ -27,6 +27,7 @@ export const TEAM_LEADER_EMAILS: string[] = [
   "shemtov.fisher@develeap.com",
   "shoshi.revivo@develeap.com",
   "tom.ronen@develeap.com",
+  "harel.sultan@develeap.com",
 ];
 
 /**

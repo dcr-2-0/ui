@@ -87,15 +87,6 @@ function getQuartersBetween(startQuarter: string, endQuarter: string): string[] 
   return result;
 }
 
-function getPreviousQuarter(q: string): string {
-  const parsed = q.split('-');
-  let qNum = parseInt(parsed[0].slice(1));
-  let year = parseInt(parsed[1]);
-  qNum--;
-  if (qNum < 1) { qNum = 4; year--; }
-  return `Q${qNum}-${year}`;
-}
-
 function CertBadgeCard({ entry }: { entry: GalleryEntry }) {
   return (
     <div className="profile-cert-badge" title={entry.item.name}>
@@ -125,16 +116,6 @@ interface PlanDisplayRow {
   noData: boolean;
 }
 
-function getHistoryStatusConfig(status: PlanDisplayRow['status']) {
-  switch (status) {
-    case 'draft':    return { label: 'Draft',    icon: 'ri-draft-line',           cls: 'history-status-draft' };
-    case 'pending':  return { label: 'Pending',  icon: 'ri-time-line',            cls: 'history-status-pending' };
-    case 'approved': return { label: 'Approved', icon: 'ri-checkbox-circle-line', cls: 'history-status-approved' };
-    case 'rejected': return { label: 'Rejected', icon: 'ri-close-circle-line',    cls: 'history-status-rejected' };
-    default:         return null;
-  }
-}
-
 export default function ProfilePage({
   profile,
   user,
@@ -144,6 +125,7 @@ export default function ProfilePage({
   planSelectedLevelId,
   planSubmittedAt,
   planRejectionReason,
+  onNavigate,
 }: ProfilePageProps) {
   // ── All hooks before any conditional return ──
   const currentQuarter = useCurrentQuarter();
@@ -254,6 +236,13 @@ export default function ProfilePage({
       };
     });
   }, [currentQuarter, planHistory, planStatus, planItems, planTotalPoints, planSelectedLevelId, planSubmittedAt, planRejectionReason, profile?.plan]);
+
+  const planStatusConfig = planStatus != null ? ({
+    draft:    { label: 'Draft',    icon: 'ri-draft-line',           cls: 'plan-status-draft' },
+    pending:  { label: 'Pending',  icon: 'ri-time-line',            cls: 'plan-status-pending' },
+    approved: { label: 'Approved', icon: 'ri-checkbox-circle-line', cls: 'plan-status-approved' },
+    rejected: { label: 'Rejected', icon: 'ri-close-circle-line',    cls: 'plan-status-rejected' },
+  } as const)[planStatus] ?? null : null;
 
   // ── Guard: not signed in ──
   if (!user) {
@@ -496,67 +485,67 @@ export default function ProfilePage({
           </div>
         ) : (
           <div className="profile-history-list">
-            {quarterlyHistoryList.map(({ quarter, entry }) => {
-              if (!entry) {
+            {quarterlyHistoryList.map((row) => {
+              if (row.noData) {
                 return (
-                  <div key={quarter} className="profile-history-entry profile-history-entry-empty">
+                  <div key={row.quarter} className="profile-history-entry profile-history-entry-empty">
                     <div className="profile-history-header profile-history-header-static">
                       <span className="profile-history-status-icon history-status-empty">
                         <i className="ri-subtract-line"></i>
                       </span>
-                      <span className="profile-history-quarter">{quarter}</span>
+                      <span className="profile-history-quarter">{row.quarter}</span>
                       <span className="profile-history-meta profile-history-no-plan">No plan submitted</span>
                     </div>
                   </div>
                 );
               }
 
-              const isExpanded = expandedQuarter === entry.quarter;
+              const isExpanded = expandedQuarter === row.quarter;
               const statusIcon =
-                entry.status === 'approved' ? 'ri-checkbox-circle-line' :
-                entry.status === 'rejected' ? 'ri-close-circle-line' :
+                row.status === 'approved' ? 'ri-checkbox-circle-line' :
+                row.status === 'rejected' ? 'ri-close-circle-line' :
                 'ri-time-line';
               const statusCls =
-                entry.status === 'approved' ? 'history-status-approved' :
-                entry.status === 'rejected' ? 'history-status-rejected' :
+                row.status === 'approved' ? 'history-status-approved' :
+                row.status === 'rejected' ? 'history-status-rejected' :
                 'history-status-pending';
               return (
-                <div key={entry.quarter} className="profile-history-entry">
+                <div key={row.quarter} className="profile-history-entry">
                   <button
                     className="profile-history-header"
-                    onClick={() => setExpandedQuarter(isExpanded ? null : entry.quarter)}
+                    onClick={() => setExpandedQuarter(isExpanded ? null : row.quarter)}
                   >
                     <span className={`profile-history-status-icon ${statusCls}`}>
                       <i className={statusIcon}></i>
                     </span>
-                    <span className="profile-history-quarter">{entry.quarter}</span>
-                    {entry.levelAchieved && (
-                      <span className="profile-history-level-badge">→ Level {entry.levelAchieved}</span>
+                    <span className="profile-history-quarter">{row.quarter}</span>
+                    {row.levelAchieved && (
+                      <span className="profile-history-level-badge">→ Level {row.levelAchieved}</span>
                     )}
                     <span className="profile-history-meta">
-                      {entry.items.length} items · {entry.totalPoints.toLocaleString()} pts
+                      {row.items.length} items · {row.totalPoints.toLocaleString()} pts
                     </span>
-                    {entry.resolvedAt && (
-                      <span className="profile-history-date">{formatDate(entry.resolvedAt)}</span>
+                    {row.resolvedAt && (
+                      <span className="profile-history-date">{formatDate(row.resolvedAt)}</span>
                     )}
                     <i className={`profile-history-chevron ri-arrow-${isExpanded ? 'up' : 'down'}-s-line`}></i>
                   </button>
-                  {entry.rejectionReason && !isExpanded && (
+                  {row.rejectionReason && !isExpanded && (
                     <div className="profile-history-rejection-inline">
                       <i className="ri-error-warning-line"></i>
-                      {entry.rejectionReason}
+                      {row.rejectionReason}
                     </div>
                   )}
                   {isExpanded && (
                     <div className="profile-history-body">
-                      {entry.rejectionReason && (
+                      {row.rejectionReason && (
                         <div className="profile-plan-rejection">
                           <i className="ri-error-warning-line"></i>
-                          {entry.rejectionReason}
+                          {row.rejectionReason}
                         </div>
                       )}
                       <div className="profile-history-items">
-                        {entry.items.map((item, i) => {
+                        {row.items.map((item: CatalogItem, i: number) => {
                           const pts = item.promotedPoints ?? item.points;
                           const pillarCfg = PILLAR_CONFIG[item.category];
                           return (

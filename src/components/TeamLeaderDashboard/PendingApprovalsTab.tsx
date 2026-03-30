@@ -70,12 +70,12 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
     member.approvalStatus === 'approved' && member.plan?.completionStatus === 'pending_review';
 
   // Check if a plan meets the level-up requirements for the target level
-  const checkPlanRequirements = (items: CatalogItem[], targetLevelId: number) => {
+  const checkPlanRequirements = (items: CatalogItem[], targetLevelId: number, carryOverPoints: number = 0) => {
     const level = levels.find((l) => l.id === targetLevelId);
     if (!level) return null;
 
     const itemIds = new Set(items.map((i) => i.id));
-    const totalPoints = items.reduce((sum, i) => sum + (i.promotedPoints ?? i.points), 0);
+    const totalPoints = items.reduce((sum, i) => sum + (i.promotedPoints ?? i.points), 0) + carryOverPoints;
 
     const pillarPoints = { tech: 0, 'knowledge-unlock': 0, collaboration: 0, professionalism: 0 };
     items.forEach((i) => {
@@ -698,13 +698,14 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
             // Quarterly plan approval card
             const planItems = member.plan?.items ?? [];
             const planCarriedItems = member.plan?.carriedItems ?? [];
+            const planCarryOverPoints = member.plan?.carryOverPoints ?? 0;
             const allPlanItems = [...planCarriedItems, ...planItems];
             const totalPlanPoints = allPlanItems.reduce(
               (sum, item) => sum + (item.promotedPoints ?? item.points),
               0
-            );
+            ) + planCarryOverPoints;
             const targetLevel = member.currentLevel ? member.currentLevel + 1 : null;
-            const reqCheck = targetLevel ? checkPlanRequirements(allPlanItems, targetLevel) : null;
+            const reqCheck = targetLevel ? checkPlanRequirements(allPlanItems, targetLevel, planCarryOverPoints) : null;
 
             return (
               <div key={member.uid} className="approval-card">
@@ -821,9 +822,14 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                           })}
                         </ul>
                         <div className="plan-total-points">
-                          {planCarriedItems.length > 0 ? 'New items: ' : 'Total: '}<strong>{planItems.reduce((s, i) => s + (i.promotedPoints ?? i.points), 0)} pts</strong>
+                          {planCarriedItems.length > 0 || planCarryOverPoints > 0 ? 'New items: ' : 'Total: '}<strong>{planItems.reduce((s, i) => s + (i.promotedPoints ?? i.points), 0)} pts</strong>
                         </div>
-                        {planCarriedItems.length > 0 && (
+                        {planCarryOverPoints > 0 && (
+                          <div className="plan-total-points">
+                            Previous level points: <strong>{planCarryOverPoints} pts</strong>
+                          </div>
+                        )}
+                        {(planCarriedItems.length > 0 || planCarryOverPoints > 0) && (
                           <div className="plan-total-points">
                             Combined total: <strong>{totalPlanPoints} pts</strong>
                           </div>

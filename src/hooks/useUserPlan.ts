@@ -487,7 +487,7 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
     [items, carriedItems]
   );
 
-  const submitPlan = useCallback(async () => {
+  const submitPlan = useCallback(async (carryOverPoints: number = 0) => {
     if (!user) {
       setError('You must be logged in to submit your plan');
       return;
@@ -516,6 +516,9 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
       }
       if (carriedFromQuarter != null) {
         planData.carriedFromQuarter = carriedFromQuarter;
+      }
+      if (carryOverPoints > 0) {
+        planData.carryOverPoints = carryOverPoints;
       }
 
       // Write planHistory snapshot to subcollection

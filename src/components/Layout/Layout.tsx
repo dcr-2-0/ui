@@ -908,7 +908,7 @@ export default function Layout() {
                 onSubmitPlan={
                   useRealPlan
                     ? async () => {
-                        await userPlan.submitPlan();
+                        await userPlan.submitPlan(carryOverPoints);
                         showToast(
                           "Plan submitted for team leader approval",
                           "added",

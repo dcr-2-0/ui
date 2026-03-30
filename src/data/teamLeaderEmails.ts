@@ -27,7 +27,6 @@ export const TEAM_LEADER_EMAILS: string[] = [
   "shemtov.fisher@develeap.com",
   "shoshi.revivo@develeap.com",
   "tom.ronen@develeap.com",
-  "izhaklatovski@gmail.com",
 ];
 
 /**
@@ -41,7 +40,6 @@ export const TEAM_LEADER_EMAILS: string[] = [
  * Add or remove entries here — no other code changes required.
  */
 export const ADMIN_EMAILS: string[] = [
-  "izhaklatovski@gmail.com",
   "izhaklatovski@develeap.com",
   "gilad.neiger@develeap.com",
 ];

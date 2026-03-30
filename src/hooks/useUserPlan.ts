@@ -6,17 +6,6 @@ import type { CatalogItem, PlanStatus, CompletionStatus, ProofEntry, PlanHistory
 import { levels, MANDATORY_ITEM_IDS } from '../data/levels';
 import type { AuthUser } from './useAuth';
 
-/** Returns the effective current date, respecting dev-mode date override. */
-function getEffectiveDate(): Date {
-  const override = localStorage.getItem('dcr-dev-date');
-  return override ? new Date(override) : new Date();
-}
-
-function getCurrentQuarter(): string {
-  const now = getEffectiveDate();
-  const q = Math.ceil((now.getMonth() + 1) / 3);
-  return `Q${q}-${now.getFullYear()}`;
-}
 
 interface UserPlan {
   items: CatalogItem[];
@@ -85,7 +74,7 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
  * Hook to manage user's real plan stored in Firestore
  * Only works for authenticated users
  */
-export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
+export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseUserPlanReturn {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [selectedLevelId, setSelectedLevelIdState] = useState<number>(0);
   const [planStatus, setPlanStatus] = useState<PlanStatus | undefined>(undefined);
@@ -153,7 +142,6 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
           // Quarter-end carryover: when a new quarter starts and the employee didn't level up,
           // items they marked as done carry forward as locked pre-completed items.
           // The plan resets to draft so the TL must re-approve for the new quarter.
-          const currentQuarter = getCurrentQuarter();
           const isNewQuarter = plan.quarter && plan.quarter !== currentQuarter;
           const noLevelUp = !plan.levelAchievedOnApproval;
 
@@ -189,12 +177,14 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
             // Items marked done this quarter → become the new locked carriedItems
             // Items NOT marked done → stay in items[] for the employee to modify
             // Mandatory items are per-quarter and always reset — never carried forward
-            const newCarriedItems = prevItems.filter((item, idx) =>
-              !MANDATORY_ITEM_IDS.includes(item.id) && prevKeys.includes(`${item.id}-${idx}`)
-            );
-            const remainingItems = prevItems.filter((item, idx) =>
-              !MANDATORY_ITEM_IDS.includes(item.id) && !prevKeys.includes(`${item.id}-${idx}`)
-            );
+            const newCarriedItems = prevItems.filter((item, idx) => {
+              const key = item.planItemKey ?? `${item.id}-${idx}`;
+              return !MANDATORY_ITEM_IDS.includes(item.id) && prevKeys.includes(key);
+            });
+            const remainingItems = prevItems.filter((item, idx) => {
+              const key = item.planItemKey ?? `${item.id}-${idx}`;
+              return !MANDATORY_ITEM_IDS.includes(item.id) && !prevKeys.includes(key);
+            });
 
             // Merge with any items already carried from an earlier quarter (multi-quarter accumulation)
             const mergedCarried = [
@@ -258,7 +248,7 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
     );
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, currentQuarter]);
 
   // Save plan to Firestore
   // Auto-resets planStatus to 'draft' when items change on an approved/rejected plan.
@@ -503,7 +493,7 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
       return;
     }
     const now = new Date().toISOString();
-    const quarter = getCurrentQuarter();
+    const quarter = currentQuarter;
     try {
       const userDocRef = doc(db, 'users', user.email);
       const totalPts =
@@ -549,7 +539,7 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
       setError('Failed to submit plan');
       throw err;
     }
-  }, [user, items, selectedLevelId, proofEntries, carriedItems, carriedFromQuarter]);
+  }, [user, items, selectedLevelId, proofEntries, carriedItems, carriedFromQuarter, currentQuarter]);
 
   const withdrawPlan = useCallback(async () => {
     if (!user) {
@@ -793,9 +783,11 @@ export function useUserPlan(user: AuthUser | null): UseUserPlanReturn {
 
   const totalItems = items.length;
 
-  // Items whose "${itemId}-${idx}" key is in completedItemKeys
   const completedItems = useMemo(
-    () => items.filter((item, idx) => completedItemKeys.includes(`${item.id}-${idx}`)),
+    () => items.filter((item, idx) => {
+      const key = item.planItemKey ?? `${item.id}-${idx}`;
+      return completedItemKeys.includes(key);
+    }),
     [items, completedItemKeys]
   );
 

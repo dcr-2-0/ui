@@ -1,3 +1,158 @@
+/* ── Quarter Settings Tab ─────────────────────────────────────────────────── */
+
+.quarter-settings-tab {
+  padding: 1rem 0;
+}
+
+.qs-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.qs-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.qs-header > i {
+  font-size: 2rem;
+  color: var(--accent-color);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.qs-header h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.qs-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.qs-status-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.qs-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.qs-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.qs-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+.qs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.qs-badge-locked {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning-color);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.qs-badge-live {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.qs-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.qs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.qs-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.qs-btn-lock {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.qs-btn-lock:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.qs-btn-release {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.qs-btn-release:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.qs-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.qs-notice i {
+  color: var(--warning-color);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
 /* Team Leader Dashboard */
 
 .team-leader-dashboard {

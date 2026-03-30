@@ -95,7 +95,7 @@ export default function SimulatorPage({
   const isPending = planStatus === 'pending';
   const isApproved = planStatus === 'approved';
   const isRejected = planStatus === 'rejected';
-  const hasProofSupport = !!onAddProof;
+  const hasProofSupport = !!onAddProof && isApproved;
   const hasCompletionSupport = isApproved && !!onToggleItemComplete;
   const isCompletionLocked = completionStatus === 'pending_review' || completionStatus === 'admin_pending' || completionStatus === 'level_up_approved';
   const isCompletionPending = completionStatus === 'pending_review';
@@ -229,7 +229,10 @@ export default function SimulatorPage({
     if (!hasCompletionSupport || !requirementsStatus) return null;
     const { level } = requirementsStatus;
 
-    const completedItems = items.filter((item, idx) => completedItemKeys.includes(`${item.id}-${idx}`));
+    const completedItems = items.filter((item, idx) => {
+      const key = item.planItemKey ?? `${item.id}-${idx}`;
+      return completedItemKeys.includes(key);
+    });
     // Carryover points are automatically counted as completed
     const completedPts = completedItems.reduce((sum, i) => sum + (i.promotedPoints ?? i.points), 0) + carryOverPoints;
 
@@ -375,8 +378,17 @@ export default function SimulatorPage({
             <div className="plan-status-title">Awaiting Level-Up Review</div>
             {completionSubmittedAt && <div className="plan-status-meta">Sent for review {formatDate(completionSubmittedAt)}</div>}
           </div>
-          <button className="plan-status-action" onClick={onWithdrawCompletedPlan} disabled={isSubmitting}>
-            <i className="ri-arrow-go-back-line"></i> Withdraw
+          <button
+            className="plan-status-action"
+            onClick={async () => {
+              if (!onWithdrawCompletedPlan) return;
+              if (!confirm('Withdraw your level-up submission?\n\nYour completed items will be kept, but your team leader will no longer see this review request. You can resubmit when ready.')) return;
+              setIsSubmitting(true);
+              try { await onWithdrawCompletedPlan(); } finally { setIsSubmitting(false); }
+            }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <><div className="spinner-small"></div> Withdrawing...</> : <><i className="ri-arrow-go-back-line"></i> Withdraw</>}
           </button>
         </div>
       )}
@@ -479,20 +491,6 @@ export default function SimulatorPage({
 
             {/* Stats cards */}
             <div className="simulator-stats-row">
-              <div className="simulator-stat-card stat-accent">
-                <span className="simulator-stat-card-value">{totalItems}</span>
-                <span className="simulator-stat-card-label">{totalItems === 1 ? 'Item' : 'Items'}</span>
-              </div>
-              <div className="simulator-stat-card stat-success">
-                <span className="simulator-stat-card-value">{totalPoints}</span>
-                <span className="simulator-stat-card-label">Plan Points</span>
-              </div>
-              {requirementsStatus && (
-                <div className="simulator-stat-card">
-                  <span className="simulator-stat-card-value">{effectiveTotalPoints}/{requirementsStatus.level.points}</span>
-                  <span className="simulator-stat-card-label">Total / Goal</span>
-                </div>
-              )}
               {carryOverPoints > 0 && (
                 <div className="simulator-stat-card stat-pending">
                   <span className="simulator-stat-card-value">+{carryOverPoints}</span>
@@ -507,158 +505,101 @@ export default function SimulatorPage({
               )}
             </div>
 
-            {/* Pillar progress bars */}
+            {/* Pillar progress bars — vertical */}
             {requirementsStatus && (
-              <div className="simulator-pillars">
-                <div className="simulator-pillar-bar">
-                  <div className="simulator-pillar-header">
-                    <span className="simulator-pillar-label">
-                      Total Points
-                      {completionStats && (completionStats.completedPts >= requirementsStatus.level.points) && <i className="ri-checkbox-circle-fill simulator-pillar-check" />}
-                    </span>
-                    <div className="simulator-pillar-legend">
-                      <span className="legend-chip req">req {requirementsStatus.level.points} pts</span>
-                      <span className="legend-chip planned-total">{effectiveTotalPoints} pts planned</span>
-                      {completionStats && <span className="legend-chip done">{completionStats.completedPts} pts done</span>}
-                    </div>
-                  </div>
-                  {(() => {
-                    const req = requirementsStatus.level.points;
-                    const planned = effectiveTotalPoints;
-                    const done = completionStats?.completedPts ?? 0;
-                    const scale = Math.max(planned, req) || 1;
-                    return (
-                      <div className="simulator-progress-bar">
-                        <div
-                          className="simulator-progress-fill fill-total"
-                          style={{ width: `${Math.min(100, (planned / scale) * 100)}%` }}
-                        />
-                        {done > 0 && <div className="simulator-progress-fill done-fill" style={{ width: `${Math.min(100, (done / scale) * 100)}%` }} />}
-                        <div className="simulator-req-marker" style={{ left: `${(req / scale) * 100}%` }} />
-                      </div>
-                    );
-                  })()}
-                </div>
+              <div className="simulator-pillars-v">
+                {[
+                  {
+                    key: 'total',
+                    label: 'Total Points',
+                    req: requirementsStatus.level.points,
+                    planned: effectiveTotalPoints,
+                    done: completionStats?.completedPts ?? 0,
+                    fillClass: 'fill-total',
+                    isMet: requirementsStatus.hasEnoughPoints,
+                    unit: 'pts',
+                  },
+                  {
+                    key: 'professionalism',
+                    label: 'Professionalism',
+                    req: requirementsStatus.pillarStatus.professionalism.required,
+                    planned: requirementsStatus.pillarStatus.professionalism.items,
+                    done: completionStats?.completedMandatoryCount ?? 0,
+                    fillClass: 'fill-professionalism',
+                    isMet: requirementsStatus.pillarStatus.professionalism.met,
+                    unit: 'items',
+                  },
+                  {
+                    key: 'tech',
+                    label: 'Tech',
+                    req: requirementsStatus.pillarStatus.tech.required,
+                    planned: requirementsStatus.pillarStatus.tech.points,
+                    done: completionStats?.pillarPts.tech ?? 0,
+                    fillClass: 'fill-tech',
+                    isMet: requirementsStatus.pillarStatus.tech.met,
+                    unit: 'pts',
+                  },
+                  {
+                    key: 'knowledge',
+                    label: 'Knowledge',
+                    req: requirementsStatus.pillarStatus['knowledge-unlock'].required,
+                    planned: requirementsStatus.pillarStatus['knowledge-unlock'].points,
+                    done: completionStats?.pillarPts['knowledge-unlock'] ?? 0,
+                    fillClass: 'fill-knowledge',
+                    isMet: requirementsStatus.pillarStatus['knowledge-unlock'].met,
+                    unit: 'pts',
+                  },
+                  {
+                    key: 'collaboration',
+                    label: 'Collaboration',
+                    req: requirementsStatus.pillarStatus.collaboration.required,
+                    planned: requirementsStatus.pillarStatus.collaboration.points,
+                    done: completionStats?.pillarPts.collaboration ?? 0,
+                    fillClass: 'fill-collaboration',
+                    isMet: requirementsStatus.pillarStatus.collaboration.met,
+                    unit: 'pts',
+                  },
+                ].map(({ key, label, req, planned, done, fillClass, isMet, unit }) => {
+                  const scale = Math.max(planned, req, 1) * 1.15;
+                  const plannedPct = Math.min(74, (planned / scale) * 100);
+                  const donePct = Math.min(74, (done / scale) * 100);
+                  const reqPct = Math.min(72, (req / scale) * 100);
+                  const checkMet = completionStats ? done >= req : isMet;
 
-                <div className="simulator-pillar-bar">
-                  <div className="simulator-pillar-header">
-                    <span className="simulator-pillar-label">
-                      Professionalism
-                      {completionStats && (completionStats.completedMandatoryCount >= requirementsStatus.pillarStatus.professionalism.required) && <i className="ri-checkbox-circle-fill simulator-pillar-check" />}
-                    </span>
-                    <div className="simulator-pillar-legend">
-                      <span className="legend-chip req">req {requirementsStatus.pillarStatus.professionalism.required} items</span>
-                      <span className="legend-chip planned-professionalism">{requirementsStatus.pillarStatus.professionalism.items} items planned</span>
-                      {completionStats && <span className="legend-chip done">{completionStats.completedMandatoryCount} items done</span>}
-                    </div>
-                  </div>
-                  {(() => {
-                    const req = requirementsStatus.pillarStatus.professionalism.required;
-                    const planned = requirementsStatus.pillarStatus.professionalism.items;
-                    const done = completionStats?.completedMandatoryCount ?? 0;
-                    const scale = Math.max(planned, req) || 1;
-                    return (
-                      <div className="simulator-progress-bar">
-                        <div
-                          className="simulator-progress-fill fill-professionalism"
-                          style={{ width: `${Math.min(100, (planned / scale) * 100)}%` }}
-                        />
-                        {done > 0 && <div className="simulator-progress-fill done-fill" style={{ width: `${Math.min(100, (done / scale) * 100)}%` }} />}
-                        <div className="simulator-req-marker" style={{ left: `${(req / scale) * 100}%` }} />
+                  return (
+                    <div key={key} className="v-bar-col">
+                      <div className="v-bar-name">
+                        {label}
+                        {checkMet && <i className="ri-checkbox-circle-fill v-bar-check" />}
                       </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="simulator-pillar-bar">
-                  <div className="simulator-pillar-header">
-                    <span className="simulator-pillar-label">
-                      Tech
-                      {completionStats && (completionStats.pillarPts.tech >= requirementsStatus.pillarStatus.tech.required) && <i className="ri-checkbox-circle-fill simulator-pillar-check" />}
-                    </span>
-                    <div className="simulator-pillar-legend">
-                      <span className="legend-chip req">req {requirementsStatus.pillarStatus.tech.required} pts</span>
-                      <span className="legend-chip planned-tech">{requirementsStatus.pillarStatus.tech.points} pts planned</span>
-                      {completionStats && <span className="legend-chip done">{completionStats.pillarPts.tech} pts done</span>}
-                    </div>
-                  </div>
-                  {(() => {
-                    const req = requirementsStatus.pillarStatus.tech.required;
-                    const planned = requirementsStatus.pillarStatus.tech.points;
-                    const done = completionStats?.pillarPts.tech ?? 0;
-                    const scale = Math.max(planned, req) || 1;
-                    return (
-                      <div className="simulator-progress-bar">
-                        <div
-                          className="simulator-progress-fill fill-tech"
-                          style={{ width: `${Math.min(100, (planned / scale) * 100)}%` }}
-                        />
-                        {done > 0 && <div className="simulator-progress-fill done-fill" style={{ width: `${Math.min(100, (done / scale) * 100)}%` }} />}
-                        <div className="simulator-req-marker" style={{ left: `${(req / scale) * 100}%` }} />
+                      <div className="v-bar-outer">
+                        <div className="v-bar-bg">
+                          {/* Gray area text — planned total, always visible above the fill */}
+                          <div className="v-bar-gray-text" style={{ bottom: `${plannedPct}%` }}>
+                            <span className="v-bar-gray-value">{planned}</span>
+                            <span className="v-bar-gray-sublabel">{unit} planned</span>
+                          </div>
+                          {/* Planned fill from bottom */}
+                          <div className={`v-bar-fill-planned ${fillClass}`} style={{ height: `${plannedPct}%` }} />
+                          {/* Done fill (green, overlaid) */}
+                          {done > 0 && <div className="v-bar-fill-done" style={{ height: `${donePct}%` }} />}
+                          {/* Done amount inside the green fill — completion mode only */}
+                          {completionStats && done > 0 && donePct >= 20 && (
+                            <div className="v-bar-text-overlay" style={{ height: `${donePct}%` }}>
+                              <span className="v-bar-text-value">{done}</span>
+                              <span className="v-bar-text-sublabel">done</span>
+                            </div>
+                          )}
+                        </div>
+                        {req > 0 && (
+                          <div className="v-bar-req-line" style={{ bottom: `${reqPct}%` }}>
+                            <span className="v-bar-req-badge">REQ {req} {unit}</span>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="simulator-pillar-bar">
-                  <div className="simulator-pillar-header">
-                    <span className="simulator-pillar-label">
-                      Knowledge
-                      {completionStats && (completionStats.pillarPts['knowledge-unlock'] >= requirementsStatus.pillarStatus['knowledge-unlock'].required) && <i className="ri-checkbox-circle-fill simulator-pillar-check" />}
-                    </span>
-                    <div className="simulator-pillar-legend">
-                      <span className="legend-chip req">req {requirementsStatus.pillarStatus['knowledge-unlock'].required} pts</span>
-                      <span className="legend-chip planned-knowledge">{requirementsStatus.pillarStatus['knowledge-unlock'].points} pts planned</span>
-                      {completionStats && <span className="legend-chip done">{completionStats.pillarPts['knowledge-unlock']} pts done</span>}
                     </div>
-                  </div>
-                  {(() => {
-                    const req = requirementsStatus.pillarStatus['knowledge-unlock'].required;
-                    const planned = requirementsStatus.pillarStatus['knowledge-unlock'].points;
-                    const done = completionStats?.pillarPts['knowledge-unlock'] ?? 0;
-                    const scale = Math.max(planned, req) || 1;
-                    return (
-                      <div className="simulator-progress-bar">
-                        <div
-                          className="simulator-progress-fill fill-knowledge"
-                          style={{ width: `${Math.min(100, (planned / scale) * 100)}%` }}
-                        />
-                        {done > 0 && <div className="simulator-progress-fill done-fill" style={{ width: `${Math.min(100, (done / scale) * 100)}%` }} />}
-                        <div className="simulator-req-marker" style={{ left: `${(req / scale) * 100}%` }} />
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="simulator-pillar-bar">
-                  <div className="simulator-pillar-header">
-                    <span className="simulator-pillar-label">
-                      Collaboration
-                      {completionStats && (completionStats.pillarPts.collaboration >= requirementsStatus.pillarStatus.collaboration.required) && <i className="ri-checkbox-circle-fill simulator-pillar-check" />}
-                    </span>
-                    <div className="simulator-pillar-legend">
-                      <span className="legend-chip req">req {requirementsStatus.pillarStatus.collaboration.required} pts</span>
-                      <span className="legend-chip planned-collaboration">{requirementsStatus.pillarStatus.collaboration.points} pts planned</span>
-                      {completionStats && <span className="legend-chip done">{completionStats.pillarPts.collaboration} pts done</span>}
-                    </div>
-                  </div>
-                  {(() => {
-                    const req = requirementsStatus.pillarStatus.collaboration.required;
-                    const planned = requirementsStatus.pillarStatus.collaboration.points;
-                    const done = completionStats?.pillarPts.collaboration ?? 0;
-                    const scale = Math.max(planned, req) || 1;
-                    return (
-                      <div className="simulator-progress-bar">
-                        <div
-                          className="simulator-progress-fill fill-collaboration"
-                          style={{ width: `${Math.min(100, (planned / scale) * 100)}%` }}
-                        />
-                        {done > 0 && <div className="simulator-progress-fill done-fill" style={{ width: `${Math.min(100, (done / scale) * 100)}%` }} />}
-                        <div className="simulator-req-marker" style={{ left: `${(req / scale) * 100}%` }} />
-                      </div>
-                    );
-                  })()}
-                </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -741,7 +682,7 @@ export default function SimulatorPage({
                         <span className="simulator-pillar-group-pts">{pillarPoints} pts</span>
                       </div>
                       {pillarIndexedItems.map(({ item, globalIdx }) => {
-                        const itemKey = `${item.id}-${globalIdx}`;
+                        const itemKey = item.planItemKey ?? `${item.id}-${globalIdx}`;
                         const isProofOpen = openProofItemKey === itemKey;
                         const itemProofCount = (proofEntries?.[itemKey] ?? []).length;
                         const isCompleted = completedItemKeys.includes(itemKey);

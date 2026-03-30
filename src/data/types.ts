@@ -143,6 +143,7 @@ export interface PlanHistoryEntry {
   resolvedAt?: string;       // ISO timestamp when TL approved/rejected
   rejectionReason?: string;
   levelAchieved?: number;    // set when approved and user leveled up
+  completedItemKeys?: string[]; // keys of items marked done during completion review
 }
 
 export interface LevelHistoryEntry {
@@ -296,4 +297,13 @@ export interface Achievement {
   // Timestamps
   createdAt: string;
   updatedAt: string;
+}
+
+// ==========================================
+// App Config Types (Quarter Freeze)
+// ==========================================
+
+export interface AppConfigDocument {
+  /** When set: all users see this as the active quarter. When null: calendar-driven. */
+  activeQuarter: string | null;
 }

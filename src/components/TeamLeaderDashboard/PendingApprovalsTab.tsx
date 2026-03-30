@@ -439,8 +439,8 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
 
     const completedItemKeys = plan?.completedItemKeys ?? [];
     const allPlanItems = plan?.items ?? [];
-    const completedItems = allPlanItems.filter((_, idx) =>
-      completedItemKeys.includes(`${allPlanItems[idx].id}-${idx}`)
+    const completedItems = allPlanItems.filter((item, idx) =>
+      completedItemKeys.includes(item.planItemKey ?? `${item.id}-${idx}`)
     );
 
     if (!confirm(`Recommend level-up for ${member.displayName}? (Level ${prevLevel} → Level ${targetLevel})\n\nThis will send a final approval request to an admin.\n\n${completedItems.length} of ${allPlanItems.length} plan items marked as completed.`)) return;
@@ -564,9 +564,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
             const plan = member.plan;
             const allPlanItems = plan?.items ?? [];
             const completedItemKeys = plan?.completedItemKeys ?? [];
-            const completedItems = allPlanItems.filter((item, idx) =>
-              completedItemKeys.includes(`${item.id}-${idx}`)
-            );
+            const completedItems = allPlanItems.filter((item, idx) => {
+              const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
+              return completedItemKeys.includes(itemKey);
+            });
             const prevLevel = member.currentLevel ?? 0;
             const targetLevel = plan?.selectedLevelId || prevLevel + 1;
             const reqCheck = checkPlanRequirements(completedItems, targetLevel);
@@ -622,10 +623,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     {allPlanItems.length > 0 ? (
                       <ul className="submission-certs">
                         {allPlanItems.map((item, idx) => {
-                          const itemKey = `${item.id}-${idx}`;
+                          const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
                           const done = completedItemKeys.includes(itemKey);
-                          const proofs = plan?.proofEntries?.[item.id] ?? [];
-                          const proofKey = `${member.uid}-${item.id}`;
+                          const proofs = plan?.proofEntries?.[itemKey] ?? [];
+                          const proofKey = `${member.uid}-${itemKey}`;
                           const proofExpanded = expandedProofKey === proofKey;
                           return (
                             <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>
@@ -794,7 +795,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                       <>
                         <ul className="submission-certs">
                           {planItems.map((item, idx) => {
-                            const itemKey = `${item.id}-${idx}`;
+                            const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
                             const proofs = member.plan?.proofEntries?.[itemKey] ?? [];
                             const proofKey = `${member.uid}-plan-${itemKey}`;
                             const proofExpanded = expandedProofKey === proofKey;
@@ -1078,7 +1079,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                         </div>
                         <ul className="submission-certs">
                           {req.planItems.map((item, idx) => {
-                            const itemKey = `${item.id}-${idx}`;
+                            const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
                             const done = req.completedItemKeys.includes(itemKey);
                             const itemProofs = proofs[itemKey] ?? [];
                             const proofKey = `lu-${req.id}-${itemKey}`;

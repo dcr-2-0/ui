@@ -5,7 +5,6 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
-import { isDevMode, getActiveMockUserKey, MOCK_USERS_MAP, seedDevData } from '../data/mockUsers';
 
 const ALLOWED_DOMAIN = '@develeap.com';
 // External accounts allowed outside the develeap domain
@@ -59,38 +58,10 @@ interface AuthState {
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>(() => {
-    // Check URL param on first render to activate dev mode
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('dev') === 'true') {
-        localStorage.setItem('dcr-dev-mode', 'true');
-        // Remove ?dev=true from URL without reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete('dev');
-        window.history.replaceState({}, '', url.toString());
-      }
-    }
-    // In dev mode, resolve the mock user synchronously
-    if (isDevMode()) {
-      const key = getActiveMockUserKey();
-      const mockUser = key ? MOCK_USERS_MAP[key] : null;
-      return {
-        user: mockUser?.authUser ?? null,
-        isLoading: false,
-        error: null,
-      };
-    }
     return { user: null, isLoading: true, error: null };
   });
 
   useEffect(() => {
-    // In dev mode: seed Firestore with mock user docs so cross-user queries work,
-    // then skip Firebase auth entirely.
-    if (isDevMode()) {
-      seedDevData().catch((e) => console.error('[DevMode] Failed to seed dev data:', e));
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // Validate email domain
@@ -128,10 +99,6 @@ export function useAuth() {
   }, []);
 
   const signInWithGoogle = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    if (isDevMode()) {
-      // In dev mode, sign-in is a no-op (use DevPanel to switch users)
-      return { success: true };
-    }
     try {
       setState((prev) => ({ ...prev, error: null }));
       await signInWithPopup(auth, googleProvider);
@@ -144,12 +111,6 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
-    if (isDevMode()) {
-      localStorage.removeItem('dcr-mock-user');
-      setState({ user: null, isLoading: false, error: null });
-      window.location.reload();
-      return;
-    }
     try {
       await firebaseSignOut(auth);
       setState({ user: null, isLoading: false, error: null });

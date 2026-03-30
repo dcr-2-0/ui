@@ -4,7 +4,6 @@ import { db } from '../config/firebase';
 import type { UserDocument, UserRole, ApprovalStatus } from '../data/types';
 import type { AuthUser } from './useAuth';
 import { TEAM_LEADER_EMAILS, ADMIN_EMAILS } from '../data/teamLeaderEmails';
-import { isDevMode, getActiveMockUserKey, MOCK_USERS_MAP } from '../data/mockUsers';
 
 interface UseUserProfileReturn {
   profile: UserDocument | null;
@@ -18,22 +17,12 @@ interface UseUserProfileReturn {
  * Listens to real-time updates and provides methods to update profile
  */
 export function useUserProfile(user: AuthUser | null): UseUserProfileReturn {
-  const [profile, setProfile] = useState<UserDocument | null>(() => {
-    if (isDevMode()) {
-      const key = getActiveMockUserKey();
-      return key ? (MOCK_USERS_MAP[key]?.profile ?? null) : null;
-    }
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(!isDevMode());
+  const [profile, setProfile] = useState<UserDocument | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Listen to real-time updates from Firestore
   useEffect(() => {
-    // In dev mode: profile and isLoading are already initialised from the mock definition
-    // (see useState initializers above). Nothing to do here.
-    if (isDevMode()) return;
-
     if (!user) {
       setProfile(null);
       setIsLoading(false);
@@ -164,12 +153,6 @@ export function useUserProfile(user: AuthUser | null): UseUserProfileReturn {
 
   // Update profile fields
   const updateProfile = async (updates: Partial<UserDocument>): Promise<void> => {
-    if (isDevMode()) {
-      // In dev mode, apply profile updates in-memory only
-      setProfile((prev) => prev ? { ...prev, ...updates } : null);
-      return;
-    }
-
     if (!user) {
       setError('You must be logged in to update your profile');
       throw new Error('Not authenticated');

@@ -72,10 +72,10 @@ function PlanItemsList({ req, expandedProofKey, onToggleProof }: {
   return (
     <ul className="submission-certs">
       {req.planItems.map((item, idx) => {
-        const itemKey = `${item.id}-${idx}`;
+        const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
         const done = req.completedItemKeys.includes(itemKey);
-        const itemProofs = proofs[item.id] ?? [];
-        const proofKey = `${req.id}-${item.id}`;
+        const itemProofs = proofs[itemKey] ?? [];
+        const proofKey = `${req.id}-${itemKey}`;
         const proofExpanded = expandedProofKey === proofKey;
         return (
           <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>

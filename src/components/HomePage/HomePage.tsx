@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useAchievements } from '../../hooks/useAchievements';
+import { useCurrentQuarter, useQuarterConfig } from '../../contexts/QuarterContext';
 import { professionalism } from '../../data/catalog/professionalism';
 import { tech } from '../../data/catalog/tech';
 import { knowledge } from '../../data/catalog/knowledge';
@@ -47,16 +48,12 @@ function getInitials(name: string | null | undefined): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function getCurrentQuarter(): string {
-  const now = new Date();
-  return `Q${Math.ceil((now.getMonth() + 1) / 3)}-${now.getFullYear()}`;
-}
-
-function getDaysRemainingInQuarter(): number {
-  const now = new Date();
-  const q = Math.ceil((now.getMonth() + 1) / 3);
-  const end = new Date(now.getFullYear(), q * 3, 0); // last day of quarter
-  return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000));
+function getDaysRemainingInQuarter(quarter: string): number {
+  const parts = quarter.split('-');
+  const q = parseInt(parts[0].slice(1));
+  const year = parseInt(parts[1]);
+  const end = new Date(year, q * 3, 0); // last day of quarter
+  return Math.max(0, Math.ceil((end.getTime() - new Date().getTime()) / 86400000));
 }
 
 function getGreeting(name: string | null | undefined): string {
@@ -96,15 +93,15 @@ export default function HomePage({
   onNavigate,
 }: HomePageProps) {
   const { achievements, isLoading: achLoading } = useAchievements(user?.email ?? null);
-
-  const currentQuarter = getCurrentQuarter();
+  const currentQuarter = useCurrentQuarter();
+  const { isFrozen } = useQuarterConfig();
 
   // Filter news to items relevant to the current quarter (or quarter-agnostic)
   const activeNews = useMemo(
     () => portalNews.filter((n) => !n.quarter || n.quarter === currentQuarter),
     [currentQuarter]
   );
-  const daysRemaining = getDaysRemainingInQuarter();
+  const daysRemaining = getDaysRemainingInQuarter(currentQuarter);
   const currentLevel = profile?.currentLevel ?? null;
   const nextLevelDef = currentLevel ? levels.find((l) => l.id === currentLevel + 1) : levels[0];
 
@@ -275,9 +272,15 @@ export default function HomePage({
           <div className="home-hero-quarter-box">
             <span className="home-hero-quarter-label">Current Quarter</span>
             <span className="home-hero-quarter-value">{currentQuarter}</span>
-            <span className="home-hero-days-left">
-              <i className="ri-time-line"></i> {daysRemaining}d remaining
-            </span>
+            {isFrozen ? (
+              <span className="home-hero-days-left">
+                <i className="ri-lock-line"></i> Quarter locked
+              </span>
+            ) : (
+              <span className="home-hero-days-left">
+                <i className="ri-time-line"></i> {daysRemaining}d remaining
+              </span>
+            )}
           </div>
           <span className={`home-mode-badge ${isSimulatorMode ? 'sim' : 'real'}`}>
             <i className={isSimulatorMode ? 'ri-flask-line' : 'ri-record-circle-line'}></i>

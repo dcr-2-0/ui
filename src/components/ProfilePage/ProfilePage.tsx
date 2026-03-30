@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useAchievements } from '../../hooks/useAchievements';
 import { usePlanHistory } from '../../hooks/usePlanHistory';
+import { useCurrentQuarter } from '../../contexts/QuarterContext';
 import type { UserDocument, CatalogItem, AchievedItem, Achievement, PlanHistoryEntry, LevelHistoryEntry, PlanStatus } from '../../data/types';
-import { levels } from '../../data/levels';
 import './ProfilePage.css';
 
 interface AuthUser {
@@ -87,12 +87,6 @@ function getQuartersBetween(startQuarter: string, endQuarter: string): string[] 
   return result;
 }
 
-function getCurrentQuarter(): string {
-  const now = new Date();
-  const q = Math.ceil((now.getMonth() + 1) / 3);
-  return `Q${q}-${now.getFullYear()}`;
-}
-
 function getPreviousQuarter(q: string): string {
   const parsed = q.split('-');
   let qNum = parseInt(parsed[0].slice(1));
@@ -116,6 +110,31 @@ function CertBadgeCard({ entry }: { entry: GalleryEntry }) {
   );
 }
 
+interface PlanDisplayRow {
+  quarter: string;
+  isCurrent: boolean;
+  status: PlanStatus | 'draft' | 'none';
+  items: CatalogItem[];
+  completedItemKeys: string[];
+  totalPoints: number;
+  selectedLevelId: number | null;
+  levelAchieved: number | null;
+  submittedAt?: string;
+  rejectionReason?: string;
+  resolvedAt?: string;
+  noData: boolean;
+}
+
+function getHistoryStatusConfig(status: PlanDisplayRow['status']) {
+  switch (status) {
+    case 'draft':    return { label: 'Draft',    icon: 'ri-draft-line',           cls: 'history-status-draft' };
+    case 'pending':  return { label: 'Pending',  icon: 'ri-time-line',            cls: 'history-status-pending' };
+    case 'approved': return { label: 'Approved', icon: 'ri-checkbox-circle-line', cls: 'history-status-approved' };
+    case 'rejected': return { label: 'Rejected', icon: 'ri-close-circle-line',    cls: 'history-status-rejected' };
+    default:         return null;
+  }
+}
+
 export default function ProfilePage({
   profile,
   user,
@@ -123,11 +142,11 @@ export default function ProfilePage({
   planItems,
   planTotalPoints,
   planSelectedLevelId,
+  planSubmittedAt,
   planRejectionReason,
-  planCarryOverPoints = 0,
-  onNavigate,
 }: ProfilePageProps) {
   // ── All hooks before any conditional return ──
+  const currentQuarter = useCurrentQuarter();
   const { achievements, isLoading: achLoading } = useAchievements(user?.email ?? null);
   const { planHistory, isLoading: histLoading } = usePlanHistory(user?.email ?? null);
   const [expandedQuarter, setExpandedQuarter] = useState<string | null>(null);
@@ -179,20 +198,62 @@ export default function ProfilePage({
     };
   }, [achievements]);
 
-  // Build the full quarterly history list: Q1-2026 up to previous quarter
-  const quarterlyHistoryList = useMemo(() => {
-    const currentQ = getCurrentQuarter();
-    const prevQ = getPreviousQuarter(currentQ);
+  // Build the full quarterly history list: current quarter down to Q1-2026
+  const quarterlyHistoryList = useMemo<PlanDisplayRow[]>(() => {
+    const currentQ = currentQuarter;
     const startQ = 'Q1-2026';
     const parseQ = (q: string) => {
       const [qPart, year] = q.split('-');
       return parseInt(year) * 10 + parseInt(qPart.slice(1));
     };
-    if (parseQ(prevQ) < parseQ(startQ)) return [];
-    const allQuarters = getQuartersBetween(startQ, prevQ);
+    if (parseQ(currentQ) < parseQ(startQ)) return [];
+
+    const allQuarters = getQuartersBetween(startQ, currentQ).reverse(); // most recent first
     const historyMap = new Map(planHistory.map((e: PlanHistoryEntry) => [e.quarter, e]));
-    return allQuarters.map((q) => ({ quarter: q, entry: historyMap.get(q) ?? null })).reverse();
-  }, [planHistory]);
+
+    return allQuarters.map((q): PlanDisplayRow => {
+      const isCurrent = q === currentQ;
+
+      if (isCurrent) {
+        const hasPlanItems = planStatus !== undefined && (planItems?.length ?? 0) > 0;
+        if (!hasPlanItems) {
+          return { quarter: q, isCurrent: true, status: 'none', items: [], completedItemKeys: [], totalPoints: 0, selectedLevelId: null, levelAchieved: null, noData: true };
+        }
+        return {
+          quarter: q,
+          isCurrent: true,
+          status: (planStatus ?? 'draft') as PlanDisplayRow['status'],
+          items: planItems ?? [],
+          completedItemKeys: profile?.plan?.completedItemKeys ?? [],
+          totalPoints: planTotalPoints ?? 0,
+          selectedLevelId: planSelectedLevelId ?? null,
+          levelAchieved: profile?.plan?.levelAchievedOnApproval ?? null,
+          submittedAt: planSubmittedAt,
+          rejectionReason: planRejectionReason,
+          noData: false,
+        };
+      }
+
+      const entry = historyMap.get(q);
+      if (!entry) {
+        return { quarter: q, isCurrent: false, status: 'none', items: [], completedItemKeys: [], totalPoints: 0, selectedLevelId: null, levelAchieved: null, noData: true };
+      }
+      return {
+        quarter: q,
+        isCurrent: false,
+        status: entry.status,
+        items: entry.items,
+        completedItemKeys: entry.completedItemKeys ?? [],
+        totalPoints: entry.totalPoints,
+        selectedLevelId: entry.selectedLevelId ?? null,
+        levelAchieved: entry.levelAchieved ?? null,
+        submittedAt: entry.submittedAt,
+        rejectionReason: entry.rejectionReason,
+        resolvedAt: entry.resolvedAt,
+        noData: false,
+      };
+    });
+  }, [currentQuarter, planHistory, planStatus, planItems, planTotalPoints, planSelectedLevelId, planSubmittedAt, planRejectionReason, profile?.plan]);
 
   // ── Guard: not signed in ──
   if (!user) {
@@ -215,24 +276,6 @@ export default function ProfilePage({
       : role === 'team_leader'
         ? { label: 'Team Leader', cls: 'role-leader' }
         : { label: 'Employee', cls: 'role-employee' };
-
-  const planStatusConfig = planStatus
-    ? ({
-        draft: { label: 'Draft', icon: 'ri-draft-line', cls: 'plan-status-draft' },
-        pending: { label: 'Pending Review', icon: 'ri-time-line', cls: 'plan-status-pending' },
-        approved: { label: 'Approved', icon: 'ri-checkbox-circle-line', cls: 'plan-status-approved' },
-        rejected: { label: 'Rejected', icon: 'ri-close-circle-line', cls: 'plan-status-rejected' },
-      } as const)[planStatus]
-    : null;
-
-  // Progress toward next level
-  const currentLevelNum = profile?.currentLevel ?? null;
-  const nextLevelId = currentLevelNum != null ? currentLevelNum + 1 : 1;
-  const nextLevel = levels.find((l) => l.id === nextLevelId) ?? null;
-  const earnedPoints = (planTotalPoints ?? 0) + planCarryOverPoints;
-  const levelProgress = nextLevel
-    ? { earned: earnedPoints, required: nextLevel.points, nextLevelId, pct: Math.min(100, Math.round((earnedPoints / nextLevel.points) * 100)) }
-    : null;
 
   const yearStatItems = [
     { icon: 'ri-trophy-line', value: yearStats.points.toLocaleString(), label: 'Points earned' },
@@ -277,19 +320,6 @@ export default function ProfilePage({
             <span className="profile-level-label">Level</span>
           </div>
         </div>
-        {levelProgress && planStatus !== undefined && (
-          <div className="profile-level-progress-row">
-            <div className="profile-level-progress-bar-wrap">
-              <div
-                className="profile-level-progress-bar-fill"
-                style={{ width: `${levelProgress.pct}%` }}
-              />
-            </div>
-            <span className="profile-level-progress-label">
-              {levelProgress.earned.toLocaleString()} / {levelProgress.required.toLocaleString()} pts · Level {levelProgress.nextLevelId}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* ── Certification Badges ── */}
@@ -325,7 +355,7 @@ export default function ProfilePage({
           >
             <div className="profile-plan-status-row">
               <i className="ri-calendar-todo-line profile-plan-status-cal-icon"></i>
-              <span className="profile-plan-status-quarter">{getCurrentQuarter()}</span>
+              <span className="profile-plan-status-quarter">{currentQuarter}</span>
               <span className="profile-plan-status-meta">
                 {itemCount} item{itemCount !== 1 ? 's' : ''} · {planPts.toLocaleString()} pts
                 {targetLevelId != null && (

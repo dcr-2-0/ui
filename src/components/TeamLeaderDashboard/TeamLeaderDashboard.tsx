@@ -4,6 +4,7 @@ import { useLevelUpRequests } from '../../hooks/useLevelUpRequests';
 import { PendingApprovalsTab } from './PendingApprovalsTab';
 import { MyTeamTab } from './MyTeamTab';
 import { LevelUpsTab, type LevelUpHistoryRow } from './LevelUpsTab';
+import { QuarterSettingsTab } from './QuarterSettingsTab';
 import type { UserDocument } from '../../data/types';
 import './TeamLeaderDashboard.css';
 
@@ -14,7 +15,7 @@ interface TeamLeaderDashboardProps {
   isAdmin?: boolean;
 }
 
-type TabId = 'pending' | 'team' | 'levelups';
+type TabId = 'pending' | 'team' | 'levelups' | 'settings';
 
 /**
  * Team Leader / Admin Dashboard - Manage team members and approvals
@@ -127,6 +128,15 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
           Level Ups
           {!isAdmin && pendingLevelUps.length > 0 && <span className="tab-badge">{pendingLevelUps.length}</span>}
         </button>
+        {isAdmin && (
+          <button
+            className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <i className="ri-settings-3-line"></i>
+            Settings
+          </button>
+        )}
       </div>
 
       {/* Tab Content */}
@@ -173,6 +183,7 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
                 approvedRequests={isAdmin ? levelUpRequests.filter((r) => r.status === 'approved') : undefined}
               />
             )}
+            {activeTab === 'settings' && isAdmin && <QuarterSettingsTab />}
           </>
         )}
       </div>

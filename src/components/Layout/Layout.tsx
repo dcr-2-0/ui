@@ -18,8 +18,6 @@ import {
 import { PendingApprovalPage } from "../PendingApprovalPage/PendingApprovalPage";
 import HomePage from "../HomePage/HomePage";
 import { getAllNavItems } from "../../data/navigation";
-import DevPanel from "../DevPanel/DevPanel";
-import { isDevMode } from "../../data/mockUsers";
 import { professionalism } from "../../data/catalog/professionalism";
 import { tech } from "../../data/catalog/tech";
 import { knowledge } from "../../data/catalog/knowledge";
@@ -29,6 +27,9 @@ import { useTheme } from "../../hooks/useTheme";
 import { useSimulatorCart } from "../../hooks/useSimulatorCart";
 import { useUserPlan } from "../../hooks/useUserPlan";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { useAppConfig } from "../../hooks/useAppConfig";
+import { computeCurrentCalendarQuarter } from "../../utils/quarterUtils";
+import { QuarterProvider } from "../../contexts/QuarterContext";
 import { useTeamMembers } from "../../hooks/useTeamMembers";
 import { usePlanHistory } from "../../hooks/usePlanHistory";
 import { useNotifications } from "../../hooks/useNotifications";
@@ -195,7 +196,9 @@ export default function Layout() {
   const auth = useAuth();
   const userProfile = useUserProfile(auth.user);
   const simulatorCart = useSimulatorCart();
-  const userPlan = useUserPlan(auth.user);
+  const { activeQuarter, setActiveQuarter } = useAppConfig();
+  const currentQuarter = activeQuarter ?? computeCurrentCalendarQuarter();
+  const userPlan = useUserPlan(auth.user, currentQuarter);
 
   // Fetch team members for team leaders and admins (to show pending count in sidebar)
   const isTeamLeader = userProfile.profile?.role === "team_leader";
@@ -695,6 +698,12 @@ export default function Layout() {
     !!profile?.teamLeaderId;
 
   return (
+    <QuarterProvider
+      currentQuarter={currentQuarter}
+      isFrozen={activeQuarter !== null}
+      activeQuarter={activeQuarter}
+      setActiveQuarter={setActiveQuarter}
+    >
     <div className="app-container">
       <div
         className={`mobile-sidebar-overlay${sidebarOpen ? " active" : ""}`}
@@ -1055,7 +1064,7 @@ export default function Layout() {
           userId={auth.user?.email}
         />
       )}
-      {isDevMode() && <DevPanel />}
     </div>
+    </QuarterProvider>
   );
 }

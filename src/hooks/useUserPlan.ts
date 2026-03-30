@@ -45,7 +45,7 @@ interface UseUserPlanReturn {
   getQuantity: (itemId: string) => number;
   totalPoints: number;
   totalItems: number;
-  submitPlan: () => Promise<void>;
+  submitPlan: (carryOverPoints?: number) => Promise<void>;
   withdrawPlan: () => Promise<void>;
   withdrawApproval: () => Promise<void>;
   addProof: (itemId: string, proof: ProofEntry) => Promise<void>;

@@ -113,6 +113,8 @@ export interface UserPlan {
   carriedItems?: CatalogItem[];
   /** The quarter these carried items came from, e.g. 'Q1-2026' */
   carriedFromQuarter?: string;
+  /** Points carried over from a previous level (surplus or preSystemPoints), saved at submit time */
+  carryOverPoints?: number;
 }
 
 export interface AchievedItem {

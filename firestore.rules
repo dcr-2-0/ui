@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated (real or mock)
+    function isAuthenticated() {
+      return request.auth != null || request.auth.uid != null;
+    }
+
+    // Helper function to check if request is from a mock user (dev mode)
+    function isMockUser() {
+      return request.auth != null && request.auth.uid.matches('mock-.*');
+    }
+
+    // DEVELOPMENT MODE: Allow all reads/writes for testing
+    // TODO: Replace with production rules before deploying
+    match /{document=**} {
+      allow read, write: if true;  // ⚠️ DEVELOPMENT ONLY - allows all access
+    }
+
+    // PRODUCTION RULES (commented out for now):
+    /*
+    // Users collection
+    match /users/{userId} {
+      // Users can read/write their own document
+      allow read, write: if request.auth.uid == userId;
+
+      // Team leaders can read their team members' documents
+      allow read: if request.auth != null &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'team_leader' &&
+                     resource.data.teamLeaderId == request.auth.uid;
+
+      // Team leaders can update their team members' approvalStatus and currentLevel
+      allow update: if request.auth != null &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'team_leader' &&
+                       resource.data.teamLeaderId == request.auth.uid &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approvalStatus', 'currentLevel', 'approvedAt', 'joinedCompanyAt']);
+
+      // Admins can read/write all user documents
+      allow read, write: if request.auth != null &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Achievements collection
+    match /achievements/{achievementId} {
+      // Users can read/write their own achievements
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Team leaders can read/update their team members' achievements
+      allow read, update: if request.auth != null &&
+                             get(/databases/$(database)/documents/users/$(resource.data.userId)).data.teamLeaderId == request.auth.uid;
+
+      // Admins can read/write all achievements
+      allow read, write: if request.auth != null &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    */
+  }
+}

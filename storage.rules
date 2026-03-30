@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // TODO: tighten before production
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    // Production rules (commented out during development):
+    // // Plan proof files: each user owns their subfolder
+    // match /planProofs/{userId}/{allPaths=**} {
+    //   allow write: if request.auth != null && request.auth.uid == userId;
+    //   allow read: if request.auth != null;
+    // }
+    // // Achievement proof files: each user owns their subfolder
+    // match /achievementProofs/{userId}/{allPaths=**} {
+    //   allow write: if request.auth != null && request.auth.uid == userId;
+    //   allow read: if request.auth != null;
+    // }
+    // match /{allPaths=**} {
+    //   allow read, write: if false;
+    // }
+  }
+}

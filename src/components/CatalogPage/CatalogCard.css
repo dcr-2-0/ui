@@ -1,0 +1,458 @@
+/* ============================================================
+   Catalog Card — Stitch "Luminous Professional" layout
+   ============================================================ */
+
+.catalog-card {
+  position: relative;
+  width: 100%;
+  background: var(--glass-elevated);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  border: none;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s ease;
+  box-shadow: var(--shadow-light), var(--refractive-edge);
+}
+
+.catalog-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-heavy);
+  border-color: rgba(192, 193, 255, 0.25);
+}
+
+/* State: in cart */
+.catalog-card.in-cart {
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.07), 0 0 12px rgba(59, 130, 246, 0.08), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(59, 130, 246, 0.04), var(--surface-container));
+}
+
+[data-theme="dark"] .catalog-card.in-cart {
+  border-color: rgba(147, 197, 253, 0.4);
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.06), 0 0 12px rgba(147, 197, 253, 0.07), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(147, 197, 253, 0.07), var(--surface-container));
+}
+
+/* State: pending plan */
+.catalog-card.in-pending-plan {
+  border: 1px solid rgba(14, 165, 233, 0.5);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.08), 0 0 12px rgba(14, 165, 233, 0.08), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(14, 165, 233, 0.04), var(--surface-container));
+}
+
+[data-theme="dark"] .catalog-card.in-pending-plan {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.07), 0 0 12px rgba(56, 189, 248, 0.08), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(56, 189, 248, 0.07), var(--surface-container));
+}
+
+/* State: approved plan */
+.catalog-card.in-approved-plan {
+  border: 1.5px solid rgba(147, 51, 234, 0.7);
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.12), 0 0 20px rgba(147, 51, 234, 0.15), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(147, 51, 234, 0.06), var(--surface-container));
+}
+
+[data-theme="dark"] .catalog-card.in-approved-plan {
+  border-color: rgba(192, 132, 252, 0.55);
+  box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.1), 0 0 20px rgba(192, 132, 252, 0.12), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(192, 132, 252, 0.09), var(--surface-container));
+}
+
+/* State: achieved */
+.catalog-card.achieved {
+  border: 1.5px solid rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 0 0 20px rgba(16, 185, 129, 0.15), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(16, 185, 129, 0.06), var(--surface-container));
+}
+
+[data-theme="dark"] .catalog-card.achieved {
+  border-color: rgba(110, 231, 183, 0.55);
+  box-shadow: 0 0 0 4px rgba(110, 231, 183, 0.1), 0 0 20px rgba(110, 231, 183, 0.12), var(--shadow-medium);
+  background: linear-gradient(160deg, rgba(110, 231, 183, 0.09), var(--surface-container));
+}
+
+/* ── Top: full-width image + badges ─────────────────── */
+
+.catalog-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.catalog-card-logo {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.catalog-card-logo img {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.catalog-card:hover .catalog-card-logo img {
+  transform: scale(1.08);
+}
+
+.catalog-card-logo i {
+  font-size: 2rem;
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+/* Badges: right column next to image */
+.catalog-card-badges {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  padding-top: 0.1rem;
+}
+
+.catalog-card-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  white-space: nowrap;
+}
+
+
+.catalog-card-badge.badge-required {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .catalog-card-badge.badge-required {
+  background: rgba(255, 180, 171, 0.12);
+  color: #ffb4ab;
+  border-color: rgba(255, 180, 171, 0.2);
+}
+
+.catalog-card-badge.badge-promoted {
+  background: linear-gradient(135deg, rgba(192, 193, 255, 0.15), rgba(75, 77, 216, 0.15));
+  color: var(--accent-color);
+  border: 1px solid rgba(192, 193, 255, 0.25);
+}
+
+.catalog-card-badge.badge-achieved {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+[data-theme="dark"] .catalog-card-badge.badge-achieved {
+  color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.12);
+  border-color: rgba(110, 231, 183, 0.2);
+}
+
+.catalog-card-badge.badge-in-plan {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+[data-theme="dark"] .catalog-card-badge.badge-in-plan {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.12);
+  border-color: rgba(147, 197, 253, 0.2);
+}
+
+.catalog-card-badge.badge-pending-plan {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0ea5e9;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+[data-theme="dark"] .catalog-card-badge.badge-pending-plan {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.catalog-card-badge.badge-approved-plan {
+  background: rgba(147, 51, 234, 0.12);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+[data-theme="dark"] .catalog-card-badge.badge-approved-plan {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+  border-color: rgba(192, 132, 252, 0.2);
+}
+
+/* ── Content: name + subtitle ───────────────────────── */
+
+.catalog-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.catalog-card-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+.catalog-card:hover .catalog-card-name {
+  color: var(--accent-color);
+}
+
+.catalog-card-sub {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Footer: points + action ────────────────────────── */
+
+.catalog-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.catalog-card-points {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.catalog-card-star {
+  font-size: 1rem;
+  color: var(--accent-color);
+  align-self: center;
+  line-height: 1;
+}
+
+.points-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.points-original {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: line-through;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.points-promoted {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--success-color);
+  letter-spacing: -0.02em;
+}
+
+.catalog-card-pts {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  align-self: center;
+}
+
+.catalog-card-qty-total {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+.catalog-card-qty-count-inline {
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+/* ── Add button (square, Stitch style) ──────────────── */
+
+.catalog-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  border: none;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+[data-theme="dark"] .catalog-add-btn {
+  background: linear-gradient(135deg, #3b5bdb, #748ffc);
+  color: #fff;
+}
+
+.catalog-add-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px var(--accent-glow);
+}
+
+.catalog-add-btn:active {
+  transform: scale(0.95);
+}
+
+.catalog-add-btn.added {
+  background: linear-gradient(135deg, var(--success-color), #059669);
+}
+
+.catalog-add-btn.added:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ── Quantity controls (repeatable) ─────────────────── */
+
+.catalog-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--glass-elevated);
+  backdrop-filter: var(--blur-light);
+  border: 1px solid rgba(75, 77, 216, 0.3);
+  border-radius: 0.5rem;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.catalog-qty-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--accent-color);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0;
+}
+
+.catalog-qty-btn:hover {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.catalog-qty-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── Status icons (achieved / pending / locked) ──────── */
+
+.catalog-action-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.catalog-action-icon.achieved {
+  color: var(--success-color);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.catalog-action-icon.pending {
+  color: var(--pending-color, #0ea5e9);
+  background: rgba(14, 165, 233, 0.12);
+}
+
+.catalog-action-icon.locked {
+  color: #9333ea;
+  background: rgba(147, 51, 234, 0.12);
+}
+
+[data-theme="dark"] .catalog-action-icon.locked {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+}
+
+[data-theme="dark"] .catalog-card-logo {
+  background: #ffffff;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .catalog-card {
+    padding: 1rem;
+  }
+
+  .catalog-card-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .catalog-card-logo img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .catalog-card-name {
+    font-size: 0.875rem;
+  }
+}

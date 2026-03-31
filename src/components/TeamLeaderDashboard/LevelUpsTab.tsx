@@ -122,7 +122,7 @@ export function LevelUpsTab({ requests, isLoading, isAdmin, allLevelHistory, app
 
   // ── Admin view ────────────────────────────────────────────────────────────
   if (isAdmin && allLevelHistory !== undefined) {
-    if (allLevelHistory.length === 0) {
+    if (allLevelHistory.filter((row) => row.quarter !== null).length === 0) {
       return (
         <div className="empty-state">
           <div className="empty-icon"><i className="ri-medal-line"></i></div>
@@ -140,7 +140,7 @@ export function LevelUpsTab({ requests, isLoading, isAdmin, allLevelHistory, app
         </div>
 
         <ul className="levelup-history-list">
-          {allLevelHistory.map((row, idx) => {
+          {allLevelHistory.filter((row) => row.quarter !== null).map((row, idx) => {
             const rowKey = `${row.uid}-${row.date}-${idx}`;
             const isExpanded = expandedKey === rowKey;
             const matchedReq = row.quarter

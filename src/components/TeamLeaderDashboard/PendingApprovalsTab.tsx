@@ -563,11 +563,13 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
           Pending Approvals
         </h2>
         <p className="tab-description">
-          Review each employee's submitted level and historical certifications, then approve or reject.
+          {adminUid
+            ? 'Review level-up requests recommended by team leaders.'
+            : 'Review each employee\'s submitted level and historical certifications, then approve or reject.'}
         </p>
       </div>
 
-      <div className="approval-cards">
+      {!adminUid && <div className="approval-cards">
         {pendingMembers.map((member) => {
           const isProcessing = processingIds.has(member.uid);
           const completion = isCompletionReview(member);
@@ -1080,7 +1082,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Level-up approval requests (admin only) */}
       {pendingLevelUps.length > 0 && (
@@ -1139,34 +1141,45 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                             {req.completedItemKeys.length}/{req.planItems.length}
                           </span>
                         </div>
-                        <ul className="submission-certs">
-                          {req.planItems.map((item, idx) => {
-                            const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
-                            const done = req.completedItemKeys.includes(itemKey);
-                            const itemProofs = proofs[itemKey] ?? [];
-                            const proofKey = `lu-${req.id}-${itemKey}`;
-                            const proofExpanded = expandedProofKey === proofKey;
-                            return (
-                              <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>
-                                <div className="cert-main">
-                                  <i className={done ? 'ri-checkbox-circle-fill cert-done-icon' : 'ri-checkbox-blank-circle-line cert-todo-icon'}></i>
-                                  <span className="cert-name">{item.name}</span>
-                                  <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
-                                  {itemProofs.length > 0 && (
-                                    <button
-                                      className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
-                                      onClick={() => toggleProofs(proofKey)}
-                                    >
-                                      <i className="ri-attachment-2-line"></i> {itemProofs.length}
-                                      <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
-                                    </button>
-                                  )}
-                                </div>
-                                {proofExpanded && renderProofEntries(itemProofs)}
-                              </li>
-                            );
-                          })}
-                        </ul>
+                        <div className="pillar-groups">
+                          {PILLAR_ORDER.filter((p) => req.planItems.some((item) => item.category === p)).map((pillar) => (
+                            <div key={pillar} className="pillar-group">
+                              <div className="pillar-group-header">
+                                <i className={PILLAR_ICON[pillar] ?? 'ri-star-line'}></i>
+                                {PILLAR_LABEL[pillar] ?? pillar}
+                              </div>
+                              <ul className="submission-certs">
+                                {req.planItems.map((item, idx) => {
+                                  if (item.category !== pillar) return null;
+                                  const itemKey = item.planItemKey ?? `${item.id}-${idx}`;
+                                  const done = req.completedItemKeys.includes(itemKey);
+                                  const itemProofs = proofs[itemKey] ?? [];
+                                  const proofKey = `lu-${req.id}-${itemKey}`;
+                                  const proofExpanded = expandedProofKey === proofKey;
+                                  return (
+                                    <li key={itemKey} className={`submission-cert-item${done ? ' cert-completed' : ' cert-incomplete'}`}>
+                                      <div className="cert-main">
+                                        <i className={done ? 'ri-checkbox-circle-fill cert-done-icon' : 'ri-checkbox-blank-circle-line cert-todo-icon'}></i>
+                                        <span className="cert-name">{item.name}</span>
+                                        <span className="cert-points">{item.promotedPoints ?? item.points} pts</span>
+                                        {itemProofs.length > 0 && (
+                                          <button
+                                            className={`cert-proof-count${proofExpanded ? ' active' : ''}`}
+                                            onClick={() => toggleProofs(proofKey)}
+                                          >
+                                            <i className="ri-attachment-2-line"></i> {itemProofs.length}
+                                            <i className={`ri-arrow-${proofExpanded ? 'up' : 'down'}-s-line`}></i>
+                                          </button>
+                                        )}
+                                      </div>
+                                      {proofExpanded && renderProofEntries(itemProofs)}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

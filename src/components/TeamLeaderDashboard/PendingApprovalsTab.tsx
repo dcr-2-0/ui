@@ -271,11 +271,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
   };
 
   const handleApproveInitial = async (member: UserDocument & { uid: string }) => {
-    const level = member.currentLevel;
-    if (!level) {
-      alert('This employee has no level on record — their submission may be incomplete.');
-      return;
-    }
+    const level = member.currentLevel ?? 0;
 
     const memberAchievements = member.achieved?.items ?? [];
     const achievementNote =
@@ -1001,13 +997,9 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     <i className="ri-bar-chart-line"></i>
                     Self-reported level
                   </div>
-                  {member.currentLevel ? (
-                    <div className="submission-level-badge">
-                      Level {member.currentLevel}
-                    </div>
-                  ) : (
-                    <span className="submission-empty">Not provided</span>
-                  )}
+                  <div className="submission-level-badge">
+                    Level {member.currentLevel ?? 0}
+                  </div>
                 </div>
 
                 {/* Historical Certifications */}
@@ -1072,7 +1064,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                   ) : (
                     <>
                       <i className="ri-check-line"></i>
-                      Approve Level {member.currentLevel ?? '?'}
+                      Approve Level {member.currentLevel ?? 0}
                     </>
                   )}
                 </button>

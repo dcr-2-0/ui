@@ -227,15 +227,14 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
               <select
                 id="current-level"
                 className="form-select"
-                value={selectedLevel ?? ''}
+                value={selectedLevel ?? 0}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  setSelectedLevel(v === '' ? null : parseInt(v, 10));
+                  const v = parseInt(e.target.value, 10);
+                  setSelectedLevel(v === 0 ? null : v);
                 }}
-                required
                 disabled={isSubmitting}
               >
-                <option value="">No level yet</option>
+                <option value={0}>No level yet</option>
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((level) => (
                   <option key={level} value={level}>
                     Level {level}

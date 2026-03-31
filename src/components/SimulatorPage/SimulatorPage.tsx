@@ -114,7 +114,7 @@ export default function SimulatorPage({
   // In real plan mode: always derive the target level from currentLevel
   // In simulator mode: use external or internal state
   const selectedLevelId = isRealPlan
-    ? (currentLevel && currentLevel < 10 ? currentLevel + 1 : 0)
+    ? (currentLevel != null && currentLevel < 10 ? currentLevel + 1 : 0)
     : (externalSelectedLevelId !== undefined ? externalSelectedLevelId : internalSelectedLevelId);
 
   const handleSetSelectedLevel = (levelId: number) => {
@@ -434,7 +434,7 @@ export default function SimulatorPage({
               <div>
                 <h2 className="simulator-hero-title">Your Learning Path</h2>
                 <p className="simulator-hero-subtitle">
-                  {isRealPlan && currentLevel
+                  {isRealPlan && currentLevel != null
                     ? `Track your progress toward Level ${currentLevel + 1}`
                     : requirementsStatus
                     ? `Building toward ${requirementsStatus.level.label}`
@@ -459,7 +459,7 @@ export default function SimulatorPage({
             </div>
 
             {/* Level badges / target selector */}
-            {isRealPlan && currentLevel ? (
+            {isRealPlan && currentLevel != null ? (
               <div className="simulator-level-row">
                 <div className="simulator-level-badge">
                   <span className="simulator-level-badge-current">

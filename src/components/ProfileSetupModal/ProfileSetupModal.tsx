@@ -23,7 +23,7 @@ export interface HistoricalAchievement {
 export interface ProfileSetupData {
   teamLeaderId?: string;
   teamLeaderName?: string;
-  currentLevel: number | null;
+  currentLevel: number;
   achievements: HistoricalAchievement[];
   preSystemPoints?: number;
 }
@@ -36,7 +36,7 @@ export interface ProfileSetupData {
 export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, userId }: ProfileSetupModalProps) {
   const { teamLeaders, isLoading: loadingLeaders } = useTeamLeaders();
   const [selectedTeamLeaderId, setSelectedTeamLeaderId] = useState<string>('');
-  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number>(0);
   const [preSystemPoints, setPreSystemPoints] = useState<number>(0);
   const [achievements, setAchievements] = useState<HistoricalAchievement[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,7 +156,7 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
       await onComplete({
         teamLeaderId: isTeamLeader ? undefined : selectedTeamLeaderId,
         teamLeaderName: isTeamLeader ? undefined : selectedLeader?.displayName,
-        currentLevel: selectedLevel ?? null,
+        currentLevel: selectedLevel,
         achievements: finalAchievements,
         preSystemPoints: preSystemPoints > 0 ? preSystemPoints : undefined,
       });
@@ -228,10 +228,7 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
                 id="current-level"
                 className="form-select"
                 value={selectedLevel ?? 0}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setSelectedLevel(v === 0 ? null : v);
-                }}
+                onChange={(e) => setSelectedLevel(parseInt(e.target.value, 10))}
                 disabled={isSubmitting}
               >
                 <option value={0}>No level yet</option>

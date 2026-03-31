@@ -103,7 +103,7 @@ export default function HomePage({
   );
   const daysRemaining = getDaysRemainingInQuarter(currentQuarter);
   const currentLevel = profile?.currentLevel ?? null;
-  const nextLevelDef = currentLevel ? levels.find((l) => l.id === currentLevel + 1) : levels[0];
+  const nextLevelDef = currentLevel != null ? levels.find((l) => l.id === currentLevel + 1) : levels[0];
 
   // ── Cart breakdown ────────────────────────────────────────────────────────
 
@@ -145,7 +145,7 @@ export default function HomePage({
   }, [profile?.achieved?.items, profile?.preSystemPoints, achievements]);
 
   const consumedPoints = useMemo(() => {
-    if (!currentLevel) return 0;
+    if (currentLevel == null) return 0;
     return levels.filter((l) => l.id <= currentLevel).reduce((s, l) => s + l.points, 0);
   }, [currentLevel]);
 
@@ -240,7 +240,7 @@ export default function HomePage({
               {displayName ?? 'Development Career Roadmap'}
             </h1>
             <div className="home-hero-tags">
-              {currentLevel && (
+              {currentLevel != null && (
                 <span className="home-tag home-tag-level">
                   <i className="ri-bar-chart-2-line"></i> Level {currentLevel}
                 </span>
@@ -313,7 +313,7 @@ export default function HomePage({
           </div>
           <div className="home-stat-body">
             <span className="home-stat-value">
-              {currentLevel ? `Level ${currentLevel}` : '—'}
+              {currentLevel != null ? `Level ${currentLevel}` : '—'}
             </span>
             <span className="home-stat-label">Current level</span>
             <span className="home-stat-sub">

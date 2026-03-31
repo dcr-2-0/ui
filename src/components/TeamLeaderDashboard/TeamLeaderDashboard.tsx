@@ -37,6 +37,7 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
         ...teamMembers.filter((m) => m.approvalStatus === 'approved' && m.plan?.completionStatus === 'pending_review'),
       ] as (UserDocument & { uid: string })[];
   const approvedMembers = teamMembers.filter((m) => m.approvalStatus === 'approved') as (UserDocument & { uid: string })[];
+  const teamsCount = new Set(approvedMembers.map((m) => m.teamLeaderId).filter(Boolean)).size;
 
   // Admin only: flat chronological history of all approved level-ups across all users
   const allLevelHistory = useMemo<LevelUpHistoryRow[] | undefined>(() => {
@@ -81,18 +82,44 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
 
         {/* Stats Cards */}
         <div className="stats-cards">
-          <div className="stat-card">
-            <i className="ri-group-line"></i>
-            <div className="stat-content">
-              <p className="stat-label">Team Members</p>
-              <p className="stat-value">{approvedMembers.length}</p>
+          {isAdmin ? (
+            <>
+              <div className="stat-card">
+                <i className="ri-user-star-line"></i>
+                <div className="stat-content">
+                  <p className="stat-label">Teams</p>
+                  <p className="stat-value">{teamsCount}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <i className="ri-group-line"></i>
+                <div className="stat-content">
+                  <p className="stat-label">Employees</p>
+                  <p className="stat-value">{approvedMembers.length}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <i className="ri-team-line"></i>
+                <div className="stat-content">
+                  <p className="stat-label">Total Members</p>
+                  <p className="stat-value">{teamsCount + approvedMembers.length}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="stat-card">
+              <i className="ri-group-line"></i>
+              <div className="stat-content">
+                <p className="stat-label">Team Members</p>
+                <p className="stat-value">{approvedMembers.length}</p>
+              </div>
             </div>
-          </div>
+          )}
           <div className="stat-card stat-warning">
             <i className="ri-time-line"></i>
             <div className="stat-content">
               <p className="stat-label">Pending Approvals</p>
-              <p className="stat-value">{pendingMembers.length + (isAdmin ? pendingLevelUps.length : 0)}</p>
+              <p className="stat-value">{isAdmin ? pendingLevelUps.length : pendingMembers.length}</p>
             </div>
           </div>
         </div>
@@ -106,8 +133,10 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
         >
           <i className="ri-group-line"></i>
           {isAdmin ? 'All Teams' : 'My Team'}
-          {approvedMembers.length > 0 && (
-            <span className="tab-count">({approvedMembers.length})</span>
+          {isAdmin ? (
+            teamsCount > 0 && <span className="tab-count">({teamsCount})</span>
+          ) : (
+            approvedMembers.length > 0 && <span className="tab-count">({approvedMembers.length})</span>
           )}
         </button>
         <button
@@ -116,8 +145,8 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
         >
           <i className="ri-time-line"></i>
           Pending Approvals
-          {(pendingMembers.length + (isAdmin ? pendingLevelUps.length : 0)) > 0 && (
-            <span className="tab-badge">{pendingMembers.length + (isAdmin ? pendingLevelUps.length : 0)}</span>
+          {(isAdmin ? pendingLevelUps.length : pendingMembers.length) > 0 && (
+            <span className="tab-badge">{isAdmin ? pendingLevelUps.length : pendingMembers.length}</span>
           )}
         </button>
         <button

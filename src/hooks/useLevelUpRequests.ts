@@ -58,7 +58,7 @@ export function useLevelUpRequests(
 
     const requestsRef = collection(db, 'levelUpRequests');
     const q = isAdmin
-      ? query(requestsRef, where('status', '==', 'pending'))
+      ? query(requestsRef)
       : query(requestsRef, where('teamLeaderId', '==', uid));
 
     const unsubscribe = onSnapshot(

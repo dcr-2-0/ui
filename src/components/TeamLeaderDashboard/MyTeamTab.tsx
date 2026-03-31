@@ -158,9 +158,6 @@ export function MyTeamTab({ approvedMembers, isAdmin = false, teamLeaders = [] }
             <i className="ri-group-line"></i>
             All Teams
           </h2>
-          <p className="tab-description">
-            {approvedMembers.length} employee{approvedMembers.length !== 1 ? 's' : ''} across {teamGroups.length} team{teamGroups.length !== 1 ? 's' : ''}
-          </p>
         </div>
 
         {teamGroups.map(([leaderId, { leader, members }]) => (

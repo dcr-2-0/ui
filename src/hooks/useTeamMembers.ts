@@ -60,7 +60,8 @@ export function useTeamMembers(teamLeaderId: string | null, isAdmin = false): Us
           totalCount: members.length,
         });
 
-        const pending = members.filter(
+        // Admin handles pending via level-up requests, not member approvals
+        const pending = isAdmin ? 0 : members.filter(
           (m) => m.approvalStatus === 'pending' || m.plan?.planStatus === 'pending'
         ).length;
         setPendingCount(pending);

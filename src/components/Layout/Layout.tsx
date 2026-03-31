@@ -31,6 +31,7 @@ import { useAppConfig } from "../../hooks/useAppConfig";
 import { computeCurrentCalendarQuarter } from "../../utils/quarterUtils";
 import { QuarterProvider } from "../../contexts/QuarterContext";
 import { useTeamMembers } from "../../hooks/useTeamMembers";
+import { useLevelUpRequests } from "../../hooks/useLevelUpRequests";
 import { usePlanHistory } from "../../hooks/usePlanHistory";
 import { useNotifications } from "../../hooks/useNotifications";
 import { useAuth } from "../../hooks/useAuth";
@@ -207,6 +208,13 @@ export default function Layout() {
     (isTeamLeader || isAdmin) && auth.user ? auth.user.email : null,
     isAdmin,
   );
+  const { requests: levelUpRequests } = useLevelUpRequests(
+    isAdmin && auth.user ? auth.user.uid : null,
+    isAdmin,
+  );
+  const pendingLevelUpsCount = isAdmin
+    ? levelUpRequests.filter((r) => r.status === "pending").length
+    : 0;
 
   // Team leader name is stored directly in the user's profile document
 
@@ -722,7 +730,7 @@ export default function Layout() {
         isSimulatorMode={isSimulatorMode}
         onToggleMode={handleToggleMode}
         userRole={userProfile.profile?.role}
-        pendingTeamCount={teamMembers.pendingCount}
+        pendingTeamCount={teamMembers.pendingCount + pendingLevelUpsCount}
         unreadNotifications={notifications.unreadCount}
         onNotificationsClick={() => notifications.markAllAsRead()}
       />

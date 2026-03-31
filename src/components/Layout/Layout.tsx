@@ -325,8 +325,8 @@ export default function Layout() {
       const isUserTeamLeader = profile?.role === "team_leader";
 
       if (isUserTeamLeader) {
-        // Team leader needs a level set
-        if (!profile?.currentLevel) {
+        // Team leader needs to complete profile setup first
+        if (profile?.approvalStatus !== 'approved') {
           setShowProfileSetup(true);
           return;
         }
@@ -452,13 +452,13 @@ export default function Layout() {
     }
   }, [userPlan.error, showToast]);
 
-  // Auto-show profile setup for team leaders who haven't set their level yet
+  // Auto-show profile setup for team leaders who haven't completed setup yet
   useEffect(() => {
     if (
       auth.user &&
       !userProfile.isLoading &&
       userProfile.profile?.role === "team_leader" &&
-      !userProfile.profile?.currentLevel
+      userProfile.profile?.approvalStatus !== "approved"
     ) {
       setShowProfileSetup(true);
     }
@@ -466,7 +466,7 @@ export default function Layout() {
     auth.user,
     userProfile.isLoading,
     userProfile.profile?.role,
-    userProfile.profile?.currentLevel,
+    userProfile.profile?.approvalStatus,
   ]);
 
   // Auto-show profile setup for new employees who haven't selected a team leader yet

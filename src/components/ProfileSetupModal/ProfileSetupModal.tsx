@@ -23,7 +23,7 @@ export interface HistoricalAchievement {
 export interface ProfileSetupData {
   teamLeaderId?: string;
   teamLeaderName?: string;
-  currentLevel: number;
+  currentLevel: number | null;
   achievements: HistoricalAchievement[];
   preSystemPoints?: number;
 }
@@ -36,7 +36,7 @@ export interface ProfileSetupData {
 export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, userId }: ProfileSetupModalProps) {
   const { teamLeaders, isLoading: loadingLeaders } = useTeamLeaders();
   const [selectedTeamLeaderId, setSelectedTeamLeaderId] = useState<string>('');
-  const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [preSystemPoints, setPreSystemPoints] = useState<number>(0);
   const [achievements, setAchievements] = useState<HistoricalAchievement[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,7 +156,7 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
       await onComplete({
         teamLeaderId: isTeamLeader ? undefined : selectedTeamLeaderId,
         teamLeaderName: isTeamLeader ? undefined : selectedLeader?.displayName,
-        currentLevel: selectedLevel,
+        currentLevel: selectedLevel ?? null,
         achievements: finalAchievements,
         preSystemPoints: preSystemPoints > 0 ? preSystemPoints : undefined,
       });
@@ -227,11 +227,15 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
               <select
                 id="current-level"
                 className="form-select"
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(parseInt(e.target.value, 10))}
+                value={selectedLevel ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSelectedLevel(v === '' ? null : parseInt(v, 10));
+                }}
                 required
                 disabled={isSubmitting}
               >
+                <option value="">No level yet</option>
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((level) => (
                   <option key={level} value={level}>
                     Level {level}

@@ -1,6 +1,32 @@
 import type { CertificationItem } from '../types';
 
 export const tech: CertificationItem[] = [
+  // ===== Anthropic (1) =====
+  {
+    id: 'tech-anthropic-cca-foundations',
+    image: 'https://firebasestorage.googleapis.com/v0/b/dcr-portal-f8df5.firebasestorage.app/o/project_data%2FGemini_Generated_Image_tuxvf7tuxvf7tuxv.png?alt=media&token=b63383eb-156e-4da4-bd59-47479234569b',
+    name: 'Claude Certified Architect – Foundations (CCA-F)',
+    points: 250,
+    promoted: true,
+    promotedPoints: 350,
+    category: 'tech',
+    subcategory: 'Anthropic',
+    provider: 'Anthropic',
+    level: 'foundational',
+    description: "Anthropic's first official technical certification. Validates the ability to design and ship production-grade Claude applications at enterprise scale — covering agentic architecture, tool design & MCP, Claude Code configuration, prompt engineering, and context & reliability.",
+    examCode: 'CCA-F',
+    examUrl: 'https://www.anthropic.com/learn',
+    price: 99,
+    duration: '120 min',
+    questions: 60,
+    questionType: 'Scenario-based multiple choice',
+    passingScore: '720/1000',
+    proctored: true,
+    prerequisites: 'Recommended: hands-on experience building production applications with Claude',
+    retakePolicy: '6 months until next try',
+    tags: ['ai-ml', 'developer'],
+  },
+
   // ===== AWS (13) =====
   {
     id: 'tech-aws-cloud-practitioner',

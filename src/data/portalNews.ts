@@ -34,7 +34,7 @@ export const portalNews: PortalNewsItem[] = [
     id: 'announcement-cca-foundations',
     type: 'announcement',
     title: 'New Certification: Claude Certified Architect – Foundations',
-    body: "Anthropic's CCA-F is now part of the DCR catalog. Launch bonus: the first 10 Develeapers to achieve it earn 350 points — after that it settles to its base value of 250. Be an early mover.",
+    body: "Anthropic's CCA-F is now part of the DCR catalog. Launch bonus: the first 10 Develeapers to achieve it by the end of July earn 350 points — after that it settles to its base value of 250. Be an early mover.",
     icon: 'ri-award-line',
     isNew: true,
     link: { label: 'View certification', navId: 'tech', navLabel: 'Tech' },

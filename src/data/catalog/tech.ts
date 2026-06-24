@@ -15,7 +15,7 @@ export const tech: CertificationItem[] = [
     level: 'foundational',
     description: "Anthropic's first official technical certification. Validates the ability to design and ship production-grade Claude applications at enterprise scale — covering agentic architecture, tool design & MCP, Claude Code configuration, prompt engineering, and context & reliability.",
     examCode: 'CCA-F',
-    examUrl: 'https://www.anthropic.com/learn',
+    examUrl: 'https://anthropic.skilljar.com/claude-certified-architect-foundations-access-request',
     price: 99,
     duration: '120 min',
     questions: 60,

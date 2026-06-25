@@ -237,17 +237,21 @@ export default function Layout() {
     useRealPlan ? (auth.user?.email ?? null) : null,
   );
 
-  // Carryover points: surplus from last approved plan (or pre-system bonus if no approved plans yet)
+  // Carryover points: pre-system bonus plus the accumulated surplus from every
+  // approved level-up. Each level-up quarter contributes (quarter total − level
+  // threshold); these accumulate across quarters when not used. A quarter that
+  // needed carryover to reach its threshold yields a negative surplus, so the
+  // running balance naturally reflects points "spent" on that level-up.
   const carryOverPoints = (() => {
     if (!useRealPlan) return 0;
-    const lastApproved = [...planHistory]
+    const preSystem = userProfile.profile?.preSystemPoints ?? 0;
+    const levelUpSurplus = planHistory
       .filter((e) => e.status === "approved" && e.levelAchieved != null)
-      .sort((a, b) => b.quarter.localeCompare(a.quarter))[0];
-    if (lastApproved && lastApproved.levelAchieved != null) {
-      const lvl = levels.find((l) => l.id === lastApproved.levelAchieved);
-      return Math.max(0, lastApproved.totalPoints - (lvl?.points ?? 0));
-    }
-    return userProfile.profile?.preSystemPoints ?? 0;
+      .reduce((sum, e) => {
+        const lvl = levels.find((l) => l.id === e.levelAchieved);
+        return sum + (e.totalPoints - (lvl?.points ?? 0));
+      }, 0);
+    return Math.max(0, preSystem + levelUpSurplus);
   })();
   const carryOverLabel = (() => {
     if (!useRealPlan || carryOverPoints === 0) return undefined;

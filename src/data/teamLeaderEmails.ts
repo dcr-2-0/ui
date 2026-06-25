@@ -9,7 +9,6 @@
  * Add or remove entries here — no other code changes required.
  */
 export const TEAM_LEADER_EMAILS: string[] = [
-  "alon.efrati@develeap.com",
   "alon.rose@develeap.com",
   "amir.bialek@develeap.com",
   "aran.shavit@develeap.com",

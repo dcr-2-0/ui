@@ -39,6 +39,12 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
   const approvedMembers = teamMembers.filter((m) => m.approvalStatus === 'approved') as (UserDocument & { uid: string })[];
   const teamsCount = new Set(approvedMembers.map((m) => m.teamLeaderId).filter(Boolean)).size;
 
+  // Total pending count for the badge/stat. Admin reviews both team-leader plan
+  // submissions (pendingMembers) and forwarded employee level-up requests.
+  const pendingCount = isAdmin
+    ? pendingLevelUps.length + pendingMembers.length
+    : pendingMembers.length;
+
   // Admin only: flat chronological history of all approved level-ups across all users
   const allLevelHistory = useMemo<LevelUpHistoryRow[] | undefined>(() => {
     if (!isAdmin) return undefined;
@@ -119,7 +125,7 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
             <i className="ri-time-line"></i>
             <div className="stat-content">
               <p className="stat-label">Pending Approvals</p>
-              <p className="stat-value">{isAdmin ? pendingLevelUps.length : pendingMembers.length}</p>
+              <p className="stat-value">{pendingCount}</p>
             </div>
           </div>
         </div>
@@ -145,8 +151,8 @@ export function TeamLeaderDashboard({ userId, userDisplayName = '', userEmail = 
         >
           <i className="ri-time-line"></i>
           Pending Approvals
-          {(isAdmin ? pendingLevelUps.length : pendingMembers.length) > 0 && (
-            <span className="tab-badge">{isAdmin ? pendingLevelUps.length : pendingMembers.length}</span>
+          {pendingCount > 0 && (
+            <span className="tab-badge">{pendingCount}</span>
           )}
         </button>
         <button

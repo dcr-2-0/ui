@@ -564,12 +564,12 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
         </h2>
         <p className="tab-description">
           {adminUid
-            ? 'Review level-up requests recommended by team leaders.'
+            ? 'Review team leaders\' submitted plans and level-up requests recommended by team leaders.'
             : 'Review each employee\'s submitted level and historical certifications, then approve or reject.'}
         </p>
       </div>
 
-      {!adminUid && <div className="approval-cards">
+      {pendingMembers.length > 0 && <div className="approval-cards">
         {pendingMembers.map((member) => {
           const isProcessing = processingIds.has(member.uid);
           const completion = isCompletionReview(member);
@@ -757,7 +757,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
               (sum, item) => sum + (item.promotedPoints ?? item.points),
               0
             ) + planCarryOverPoints;
-            const targetLevel = member.currentLevel ? member.currentLevel + 1 : null;
+            const targetLevel = member.currentLevel != null ? member.currentLevel + 1 : null;
             const reqCheck = targetLevel ? checkPlanRequirements(allPlanItems, targetLevel, planCarryOverPoints) : null;
 
             return (

@@ -29,7 +29,7 @@ State-based navigation in `Layout.tsx` (no React Router). `activeId` state deter
 
 **Component hierarchy:** `main.tsx` → `App.tsx` → `Layout.tsx` (orchestrator)
 
-Layout manages: Sidebar, CommandPalette, Toast notifications, ProfileSetupModal, WelcomeModal, and all page components. Pages: GuidelinesPage, FaqPage, FormsPage, CatalogPage, SimulatorPage, TeamLeaderDashboard.
+Layout manages: Sidebar, CommandPalette, Toast notifications, ProfileSetupModal, the sign-in gate (signed-out visitors), and all page components. Pages: GuidelinesPage, FaqPage, FormsPage, CatalogPage, SimulatorPage, TeamLeaderDashboard.
 
 ### Authentication (Dual-Mode)
 
@@ -39,7 +39,7 @@ Layout manages: Sidebar, CommandPalette, Toast notifications, ProfileSetupModal,
 
 Three roles: `employee`, `team_leader`, `admin`. Three approval statuses: `pending`, `approved`, `rejected`.
 
-**Employee flow:** Sign in → WelcomeModal (select team leader) → PendingApprovalPage (wait) → Team leader approves with level 1-10 → Full access.
+**Employee flow:** Sign in → ProfileSetupModal (select team leader, declare starting level, optionally add historical achievements) → PendingApprovalPage (wait) → Team leader approves → Full access.
 
 **Team leader flow:** Sign in → ProfileSetupModal (set own level) → Auto-approved immediately, no external approval needed.
 

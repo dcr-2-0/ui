@@ -1,0 +1,170 @@
+/* ==========================================
+   GlassSelect — custom dropdown
+   ========================================== */
+
+.glass-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 160px;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.5rem;
+  font-family: var(--body-font);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.glass-select-trigger:hover {
+  border-color: var(--accent-color);
+}
+
+.glass-select-trigger.open,
+.glass-select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.glass-select-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glass-select-value.placeholder {
+  color: var(--text-muted);
+}
+
+.glass-select-chevron {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+/* Popover — portaled to <body> */
+.glass-select-pop {
+  position: fixed;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 24px));
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  animation: glassSelectIn 0.12s ease;
+}
+
+@keyframes glassSelectIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.glass-select-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.glass-select-search i {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.glass-select-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--body-font);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.glass-select-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.glass-select-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.glass-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: var(--body-font);
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s;
+}
+
+.glass-select-option.highlighted {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.glass-select-option.selected {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.glass-select-option.selected.highlighted {
+  color: #fff;
+}
+
+.glass-select-option.highlighted .glass-select-option-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.glass-select-option i {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.glass-select-option-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glass-select-option-sub {
+  flex-shrink: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.glass-select-option.selected .glass-select-option-sub {
+  color: var(--accent-light);
+}
+
+.glass-select-empty {
+  padding: 12px 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}

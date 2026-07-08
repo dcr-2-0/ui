@@ -98,50 +98,39 @@ export function MyTeamTab({ approvedMembers, isAdmin = false, teamLeaders = [] }
     );
   }
 
+  // Compact horizontal strip per member — roster scanning beats cards here
   const renderMemberCard = (member: MemberWithUid) => (
-    <div key={member.uid} className="team-card">
-      {/* Member Header */}
-      <div className="team-card-header">
-        <div className="member-avatar">
-          {member.photoURL ? (
-            <img
-              src={member.photoURL}
-              alt={member.displayName}
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="avatar-placeholder">
-              <i className="ri-user-line"></i>
-            </div>
-          )}
-        </div>
-        <div className="level-badge-container">
-          <div className={`level-badge ${getLevelColor(member.currentLevel)}`}>
-            <span className="level-number">
-              {member.currentLevel || '?'}
-            </span>
-            <span className="level-label">Level</span>
+    <div
+      key={member.uid}
+      className="member-row"
+      onClick={() => setSelectedMember(member)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && setSelectedMember(member)}
+    >
+      <div className="member-avatar member-row-avatar">
+        {member.photoURL ? (
+          <img
+            src={member.photoURL}
+            alt={member.displayName}
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="avatar-placeholder">
+            <i className="ri-user-line"></i>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Member Info */}
-      <div className="team-card-body">
-        <h3>{member.displayName}</h3>
-        <p className="member-email">{member.email}</p>
-        {getPlanChip(member)}
+      <div className="member-row-identity">
+        <span className="member-row-name">{member.displayName}</span>
+        <span className="member-row-email">{member.email}</span>
       </div>
-
-      {/* Member Actions */}
-      <div className="team-card-footer">
-        <button
-          className="btn-ghost btn-small"
-          onClick={() => setSelectedMember(member)}
-        >
-          <i className="ri-eye-line"></i>
-          View Details
-        </button>
+      <div className="member-row-chip">{getPlanChip(member)}</div>
+      <div className={`level-badge member-row-level ${getLevelColor(member.currentLevel)}`}>
+        <span className="level-number">{member.currentLevel ?? '?'}</span>
+        <span className="level-label">Level</span>
       </div>
+      <i className="ri-arrow-right-s-line member-row-chevron"></i>
     </div>
   );
 
@@ -163,14 +152,19 @@ export function MyTeamTab({ approvedMembers, isAdmin = false, teamLeaders = [] }
         {teamGroups.map(([leaderId, { leader, members }]) => (
           <div key={leaderId} className="team-group">
             <div className="team-group-header">
-              <div className="team-leader-info">
-                {leader ? (
-                  <>
-                    <button
-                      className="team-leader-avatar team-leader-avatar-btn"
-                      onClick={() => setSelectedMember(leader)}
-                      title="View team leader details"
-                    >
+              {leader ? (
+                /* TL as a card, like any employee — image, name, mail,
+                   level badge in the card's corner */
+                <div
+                  className="team-card tl-team-card"
+                  onClick={() => setSelectedMember(leader)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelectedMember(leader)}
+                  title="View team leader details"
+                >
+                  <div className="team-card-header">
+                    <div className="member-avatar">
                       {leader.photoURL ? (
                         <img src={leader.photoURL} alt={leader.displayName} referrerPolicy="no-referrer" />
                       ) : (
@@ -178,32 +172,35 @@ export function MyTeamTab({ approvedMembers, isAdmin = false, teamLeaders = [] }
                           <i className="ri-user-star-line"></i>
                         </div>
                       )}
-                    </button>
-                    <div>
-                      <button
-                        className="team-group-title-btn"
-                        onClick={() => setSelectedMember(leader)}
-                      >
-                        {leader.displayName}'s Team
-                        <i className="ri-external-link-line tl-link-icon"></i>
-                      </button>
-                      <p className="team-group-subtitle">{leader.email}</p>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="team-leader-avatar">
-                      <div className="avatar-placeholder avatar-unassigned">
-                        <i className="ri-user-unfollow-line"></i>
+                    <div className="level-badge-container">
+                      <div className={`level-badge ${getLevelColor(leader.currentLevel ?? null)}`}>
+                        <span className="level-number">{leader.currentLevel ?? 0}</span>
+                        <span className="level-label">Level</span>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="team-group-title">Unassigned</h3>
-                      <p className="team-group-subtitle">Employees without a team leader</p>
+                  </div>
+                  <div className="team-card-body">
+                    <h3>
+                      {leader.displayName}'s Team
+                      <i className="ri-external-link-line tl-link-icon"></i>
+                    </h3>
+                    <p className="member-email">{leader.email}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="team-leader-info">
+                  <div className="team-leader-avatar">
+                    <div className="avatar-placeholder avatar-unassigned">
+                      <i className="ri-user-unfollow-line"></i>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                  <div>
+                    <h3 className="team-group-title">Unassigned</h3>
+                    <p className="team-group-subtitle">Employees without a team leader</p>
+                  </div>
+                </div>
+              )}
               <span className="team-group-count">
                 {members.length} member{members.length !== 1 ? 's' : ''}
               </span>

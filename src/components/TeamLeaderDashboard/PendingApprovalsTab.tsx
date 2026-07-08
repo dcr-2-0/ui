@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { doc, updateDoc, collection, setDoc, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, setDoc, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { createNotification } from '../../hooks/useNotifications';
-import { HR_EMAIL } from '../../data/hrConfig';
+import { createNotification, queueEmail } from '../../hooks/useNotifications';
+import { useHrEmail } from '../../hooks/useHrEmail';
 import { levels } from '../../data/levels';
+import { useCurrentQuarter } from '../../contexts/QuarterContext';
 import type { UserDocument, CatalogItem, LevelHistoryEntry, ProofEntry, LevelUpRequest } from '../../data/types';
+
+/** "Q3-2026" → sortable index (year*4 + quarter) for age comparisons */
+function quarterIndex(q: string): number {
+  const [qPart, year] = q.split('-');
+  return parseInt(year) * 4 + (parseInt(qPart.slice(1)) - 1);
+}
 
 const PILLAR_ICON: Record<string, string> = {
   tech: 'ri-computer-line',
@@ -48,6 +55,18 @@ interface PendingApprovalsTabProps {
 export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderName, teamLeaderEmail, pendingLevelUps = [], adminUid }: PendingApprovalsTabProps) {
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [expandedProofKey, setExpandedProofKey] = useState<string | null>(null);
+  const currentQuarter = useCurrentQuarter();
+  const hrEmail = useHrEmail();
+  // Approval cards are collapsed by default; expanding reveals the full
+  // submission and the Approve/Reject actions.
+  const [expandedApprovals, setExpandedApprovals] = useState<Set<string>>(new Set());
+  const toggleApproval = (key: string) =>
+    setExpandedApprovals((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   const toggleProofs = (key: string) =>
     setExpandedProofKey((prev) => (prev === key ? null : key));
@@ -120,6 +139,34 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
 
   const handleApproveLevelUp = async (req: LevelUpRequest) => {
     if (!adminUid) return;
+    if (processingIds.has(req.id)) return;
+
+    // Idempotency guard: if the member is already at (or past) the target
+    // level, this is a stale/duplicate request. Close it without applying
+    // anything — prevents no-op "3 → 3" entries in the level history.
+    try {
+      const { getDoc } = await import('firebase/firestore');
+      const guardSnap = await getDoc(doc(db, 'users', req.userId));
+      const liveLevel: number = guardSnap.exists()
+        ? (guardSnap.data().currentLevel ?? 0)
+        : 0;
+      if (req.levelTo <= liveLevel) {
+        alert(
+          `${req.userDisplayName} is already at Level ${liveLevel}, so this request (to Level ${req.levelTo}) is stale or a duplicate.\n\nIt will be closed without changing the member's level.`
+        );
+        await updateDoc(doc(db, 'levelUpRequests', req.id), {
+          status: 'rejected',
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: adminUid,
+          rejectionReason: `Superseded — member is already at Level ${liveLevel}`,
+        });
+        return;
+      }
+    } catch (err) {
+      console.error('[PendingApprovalsTab] Stale-request guard failed:', err);
+      // Fall through — the normal flow below still asks for confirmation
+    }
+
     if (!confirm(`Approve level-up for ${req.userDisplayName}? (Level ${req.levelFrom} → Level ${req.levelTo})`)) return;
 
     try {
@@ -209,10 +256,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
           html: `<h2>Level-Up Confirmed</h2><p>An admin approved your recommendation for <strong>${req.userDisplayName}</strong>.</p><p><strong>Level:</strong> ${req.levelFrom} → ${req.levelTo}</p><p><strong>Quarter:</strong> ${req.quarter}</p>`,
         },
       });
-      if (HR_EMAIL) {
+      if (hrEmail) {
         await addDoc(collection(db, 'emailQueue'), {
           ...emailBase,
-          to: HR_EMAIL,
+          to: hrEmail,
           message: {
             subject: `DCR Level-Up: ${req.userDisplayName} → Level ${req.levelTo}`,
             html: `<h2>DCR Level-Up Approved</h2><p><strong>Employee:</strong> ${req.userDisplayName} (${req.userEmail})</p><p><strong>Level:</strong> ${req.levelFrom} → ${req.levelTo}</p><p><strong>Quarter:</strong> ${req.quarter}</p><p><strong>Team Leader:</strong> ${req.teamLeaderName}</p>`,
@@ -274,10 +321,13 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
     const level = member.currentLevel ?? 0;
 
     const memberAchievements = member.achieved?.items ?? [];
-    const achievementNote =
-      memberAchievements.length > 0
-        ? ` and ${memberAchievements.length} historical achievement${memberAchievements.length !== 1 ? 's' : ''}`
-        : '';
+    const memberPreSystemPoints = member.preSystemPoints ?? 0;
+    const parts: string[] = [];
+    if (memberAchievements.length > 0)
+      parts.push(`${memberAchievements.length} historical achievement${memberAchievements.length !== 1 ? 's' : ''}`);
+    if (memberPreSystemPoints > 0)
+      parts.push(`${memberPreSystemPoints.toLocaleString()} extra pts from before Q1 2026`);
+    const achievementNote = parts.length > 0 ? ` and ${parts.join(' and ')}` : '';
 
     if (!confirm(`Approve ${member.displayName} at Level ${level}${achievementNote}?`)) return;
 
@@ -304,6 +354,16 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
         levelHistory: [newLevelEntry],
         ...achievedUpdate,
       });
+
+      // Warm first touch — the PendingApprovalPage updates live, but this
+      // makes the moment visible in the bell too
+      createNotification({
+        userId: member.uid,
+        type: 'registration_approved',
+        title: 'Welcome to DCR!',
+        message: `You're in — Level ${level} confirmed. Time to build your first quarterly plan.`,
+        metadata: { levelTo: level },
+      }).catch((err) => console.error('[PendingApprovalsTab] Welcome notification failed:', err));
 
       console.log('[PendingApprovalsTab] Approved member:', { uid: member.uid, level, achievements: memberAchievements.length });
     } catch (err) {
@@ -351,7 +411,6 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
 
   const handleApprovePlan = async (member: UserDocument & { uid: string }) => {
     const planItems = member.plan?.items ?? [];
-    const targetLevel = member.plan?.selectedLevelId;
     if (!confirm(`Approve ${member.displayName}'s quarterly plan (${planItems.length} item${planItems.length !== 1 ? 's' : ''})?`)) return;
 
     try {
@@ -364,34 +423,31 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
       // Resolve planHistory doc
       const historyRef = doc(collection(userRef, 'planHistory'), quarter);
 
-      // Build level history entry if this plan includes a level-up
-      const prevLevel = member.currentLevel ?? 0;
-      const levelAchieved = targetLevel && targetLevel > prevLevel ? targetLevel : undefined;
-      const newLevelEntry: LevelHistoryEntry | null = levelAchieved
-        ? { level: levelAchieved, date: now, quarter }
-        : null;
-
+      // Plan approval locks in the plan of intent — it does NOT grant a level.
+      // Levels are granted solely by the completion path (completed plan →
+      // TL recommendation → admin approval). Granting here was legacy behavior
+      // and the source of duplicate "N → N" level-up records.
       const userUpdate: Record<string, unknown> = {
         'plan.planStatus': 'approved',
         'plan.planApprovedAt': now,
         'plan.planRejectionReason': null,
-        'plan.levelAchievedOnApproval': levelAchieved ?? null,
+        'plan.levelAchievedOnApproval': null,
       };
-      if (levelAchieved) {
-        userUpdate.currentLevel = levelAchieved;
-        // Append to levelHistory array (arrayUnion not imported, so read+write is fine here)
-        userUpdate.levelHistory = [
-          ...(member.levelHistory ?? []),
-          newLevelEntry,
-        ];
-      }
 
       await Promise.all([
         updateDoc(userRef, userUpdate),
-        setDoc(historyRef, { status: 'approved', resolvedAt: now, levelAchieved: levelAchieved ?? null }, { merge: true }),
+        setDoc(historyRef, { status: 'approved', resolvedAt: now, levelAchieved: null }, { merge: true }),
       ]);
 
-      console.log('[PendingApprovalsTab] Approved quarterly plan:', { uid: member.uid, itemCount: planItems.length, levelAchieved });
+      createNotification({
+        userId: member.uid,
+        type: 'plan_approved',
+        title: 'Plan Approved',
+        message: `Your ${quarter} plan was approved by ${teamLeaderName}. Good luck this quarter!`,
+        metadata: { quarter },
+      }).catch((err) => console.error('[PendingApprovalsTab] Plan-approved notification failed:', err));
+
+      console.log('[PendingApprovalsTab] Approved quarterly plan:', { uid: member.uid, itemCount: planItems.length });
     } catch (err) {
       console.error('[PendingApprovalsTab] Error approving plan:', err);
       alert('Failed to approve plan. Please try again.');
@@ -426,6 +482,14 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
         }),
         setDoc(historyRef, { status: 'rejected', resolvedAt: now, rejectionReason }, { merge: true }),
       ]);
+
+      createNotification({
+        userId: member.uid,
+        type: 'plan_rejected',
+        title: 'Plan Needs Changes',
+        message: `Your ${quarter} plan was rejected: ${rejectionReason}. Edit it and resubmit.`,
+        metadata: { quarter, reason: rejectionReason },
+      }).catch((err) => console.error('[PendingApprovalsTab] Plan-rejected notification failed:', err));
 
       console.log('[PendingApprovalsTab] Rejected quarterly plan:', { uid: member.uid, reason });
     } catch (err) {
@@ -481,6 +545,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
         completedItemKeys,
         planItems: allPlanItems,
         proofEntries: plan?.proofEntries ?? {},
+        carryOverPoints: plan?.carryOverPoints ?? 0,
         status: 'pending',
         requestedAt: now,
       });
@@ -489,6 +554,50 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
       await updateDoc(userRef, {
         'plan.completionStatus': 'admin_pending',
       });
+
+      // Push alerts — the employee learns their level-up moved forward, and
+      // every admin gets a "waiting for you" notification + email.
+      // Fire-and-forget: never blocks the recommendation itself.
+      void (async () => {
+        try {
+          await createNotification({
+            userId: member.uid,
+            type: 'level_up_recommended',
+            title: 'Level-Up Sent to Admin',
+            message: `${teamLeaderName} recommended your level-up to Level ${targetLevel} — awaiting final admin approval.`,
+            metadata: { levelFrom: prevLevel, levelTo: targetLevel, quarter },
+          });
+          const adminsSnap = await getDocs(
+            query(collection(db, 'users'), where('role', '==', 'admin')),
+          );
+          await Promise.all(
+            adminsSnap.docs.flatMap((adminDoc) => {
+              const adminEmail = (adminDoc.data().email as string | undefined) ?? adminDoc.id;
+              return [
+                createNotification({
+                  userId: adminDoc.id,
+                  type: 'level_up_recommended',
+                  title: 'Level-Up Awaiting Your Approval',
+                  message: `${teamLeaderName} recommends ${member.displayName} for Level ${targetLevel} (${quarter}).`,
+                  metadata: {
+                    levelFrom: prevLevel,
+                    levelTo: targetLevel,
+                    quarter,
+                    employeeName: member.displayName,
+                  },
+                }),
+                queueEmail(
+                  adminEmail,
+                  `DCR: Level-up recommendation for ${member.displayName} awaits your approval`,
+                  `<h2>Level-up awaiting admin approval</h2><p><strong>${teamLeaderName}</strong> recommends <strong>${member.displayName}</strong> for Level ${targetLevel} (${quarter}).</p><p>Review it in the DCR portal &rarr; Admin Dashboard &rarr; Pending Approvals.</p>`,
+                ),
+              ];
+            }),
+          );
+        } catch (err) {
+          console.error('[PendingApprovalsTab] Level-up alert fan-out failed:', err);
+        }
+      })();
 
       console.log('[PendingApprovalsTab] Level-up forwarded to admin:', { uid: member.uid, targetLevel });
     } catch (err) {
@@ -597,7 +706,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
 
             return (
               <div key={member.uid} className="approval-card">
-                <div className="approval-header">
+                <div className="approval-header approval-header-clickable" onClick={() => toggleApproval(`completion-${member.uid}`)}>
                   <div className="member-avatar">
                     {member.photoURL ? (
                       <img src={member.photoURL} alt={member.displayName} referrerPolicy="no-referrer" />
@@ -620,8 +729,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                       </p>
                     )}
                   </div>
+                  <i className={`ri-arrow-${expandedApprovals.has(`completion-${member.uid}`) ? "up" : "down"}-s-line approval-chevron`}></i>
                 </div>
 
+                {expandedApprovals.has(`completion-${member.uid}`) && (<>
                 <div className="employee-submission">
                   <div className="submission-section">
                     <div className="submission-label">
@@ -739,6 +850,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     <i className="ri-close-line"></i> Request Revision
                   </button>
                 </div>
+                </>)}
               </div>
             );
           }
@@ -763,7 +875,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
             return (
               <div key={member.uid} className="approval-card">
                 {/* Member Info */}
-                <div className="approval-header">
+                <div className="approval-header approval-header-clickable" onClick={() => toggleApproval(`plan-${member.uid}`)}>
                   <div className="member-avatar">
                     {member.photoURL ? (
                       <img
@@ -792,9 +904,11 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                       </p>
                     )}
                   </div>
+                  <i className={`ri-arrow-${expandedApprovals.has(`plan-${member.uid}`) ? "up" : "down"}-s-line approval-chevron`}></i>
                 </div>
 
                 {/* Plan Details */}
+                {expandedApprovals.has(`plan-${member.uid}`) && (<>
                 <div className="employee-submission">
                   {/* Target Level */}
                   <div className="submission-section">
@@ -948,17 +1062,19 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     Reject
                   </button>
                 </div>
+                </>)}
               </div>
             );
           }
 
           // Initial registration card (existing behavior)
           const memberAchievements = member.achieved?.items ?? [];
+          const memberPreSystemPoints = member.preSystemPoints ?? 0;
 
           return (
             <div key={member.uid} className="approval-card">
               {/* Member Info */}
-              <div className="approval-header">
+              <div className="approval-header approval-header-clickable" onClick={() => toggleApproval(`init-${member.uid}`)}>
                 <div className="member-avatar">
                   {member.photoURL ? (
                     <img
@@ -989,9 +1105,11 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     Requested {formatDate(member.createdAt)}
                   </p>
                 </div>
+                <i className={`ri-arrow-${expandedApprovals.has(`init-${member.uid}`) ? "up" : "down"}-s-line approval-chevron`}></i>
               </div>
 
               {/* Employee's Submission */}
+              {expandedApprovals.has(`init-${member.uid}`) && (<>
               <div className="employee-submission">
                 {/* Reported Level */}
                 <div className="submission-section">
@@ -1049,6 +1167,21 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                     <span className="submission-empty">None submitted</span>
                   )}
                 </div>
+
+                {/* Extra points from before Q1 2026 */}
+                <div className="submission-section">
+                  <div className="submission-label">
+                    <i className="ri-coin-line"></i>
+                    Extra points from before Q1 2026
+                  </div>
+                  {memberPreSystemPoints > 0 ? (
+                    <div className="submission-level-badge">
+                      +{memberPreSystemPoints.toLocaleString()} pts
+                    </div>
+                  ) : (
+                    <span className="submission-empty">None submitted</span>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}
@@ -1079,6 +1212,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                   Reject
                 </button>
               </div>
+              </>)}
             </div>
           );
         })}
@@ -1098,7 +1232,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
               const proofs = req.proofEntries ?? {};
               return (
                 <div key={req.id} className="approval-card">
-                  <div className="approval-header">
+                  <div className="approval-header approval-header-clickable" onClick={() => toggleApproval(`lu-${req.id}`)}>
                     <div className="member-avatar">
                       {req.userPhotoURL ? (
                         <img src={req.userPhotoURL} alt={req.userDisplayName} referrerPolicy="no-referrer" />
@@ -1112,6 +1246,16 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                         <span className="approval-type-badge approval-type-completion">
                           <i className="ri-medal-line"></i> Level-Up Request
                         </span>
+                        {(() => {
+                          const age = quarterIndex(currentQuarter) - quarterIndex(req.quarter);
+                          if (age < 1) return null;
+                          return (
+                            <span className={`approval-age-chip${age >= 2 ? ' age-critical' : ''}`}>
+                              <i className="ri-alarm-warning-line"></i>
+                              {age === 1 ? '1 quarter old' : `${age} quarters old`}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="member-email">{req.userEmail}</p>
                       <p className="request-date">
@@ -1119,8 +1263,10 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                         {req.quarter} · Recommended by {req.teamLeaderName} on {formatDate(req.requestedAt)}
                       </p>
                     </div>
+                    <i className={`ri-arrow-${expandedApprovals.has(`lu-${req.id}`) ? "up" : "down"}-s-line approval-chevron`}></i>
                   </div>
 
+                  {expandedApprovals.has(`lu-${req.id}`) && (<>
                   <div className="employee-submission">
                     <div className="submission-section">
                       <div className="submission-label">
@@ -1182,6 +1328,22 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                         </div>
                       </div>
                     )}
+
+                    {(req.carryOverPoints ?? 0) > 0 && (
+                      <div className="submission-section">
+                        <div className="submission-label">
+                          <i className="ri-arrow-right-up-line"></i>
+                          Carryover
+                          <span className="submission-count submission-carry-count">
+                            +{req.carryOverPoints!.toLocaleString()} pts
+                          </span>
+                        </div>
+                        <p className="submission-carry-note">
+                          Banked points (pre-portal or surplus from previous level-ups)
+                          that count toward the Level {req.levelTo} threshold.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="approval-actions">
@@ -1204,6 +1366,7 @@ export function PendingApprovalsTab({ pendingMembers, teamLeaderId, teamLeaderNa
                       <i className="ri-close-line"></i> Reject
                     </button>
                   </div>
+                  </>)}
                 </div>
               );
             })}

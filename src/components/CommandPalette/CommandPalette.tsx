@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { getAllNavItems } from "../../data/navigation";
 import { faq } from "../../data/faq";
 import { guidelines } from "../../data/guidelines";
@@ -172,7 +173,10 @@ export default function CommandPalette({
 
   if (!isOpen) return null;
 
-  return (
+  // Portal to <body>: the glass window's backdrop-filter would otherwise
+  // confine this fixed overlay to the window, leaving the area around it
+  // (video margins) unclickable.
+  return createPortal(
     <div className="command-palette-overlay" onClick={onClose}>
       <div
         className="command-palette"
@@ -226,7 +230,8 @@ export default function CommandPalette({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

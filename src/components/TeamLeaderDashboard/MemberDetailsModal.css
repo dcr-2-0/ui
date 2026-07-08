@@ -28,11 +28,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
+  background: var(--glass-bg-light);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-2xl);
+  border-radius: 10px;
+  box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.4);
   animation: detailsSlideUp 0.3s ease;
 }
 
@@ -571,6 +570,40 @@
 .carry-over-row { opacity: 0.75; }
 .carry-over-pts { color: #a78bfa; font-weight: 600; }
 [data-theme='dark'] .carry-over-pts { color: #c4b5fd; }
+
+/* Carry-over in plan history */
+.modal-plan-carryover {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #a78bfa;
+  font-weight: 600;
+}
+[data-theme='dark'] .modal-plan-carryover { color: #c4b5fd; }
+
+.modal-plan-carryover-summary {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.modal-plan-carryover-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.modal-plan-carryover-line i { margin-right: 0.25rem; }
+
+.modal-plan-carryover-total {
+  font-weight: 700;
+  color: var(--text-primary);
+}
 
 /* Pillar grouping */
 .pillar-group {

@@ -35,11 +35,12 @@ export default function CatalogCard({
     ? certItem.provider
     : undefined;
 
+  // Three visual states only: none / in plan / achieved. Plan lifecycle
+  // detail (draft vs submitted vs approved) lives on the Plan page; here it
+  // only affects the action control (removable vs locked).
   const cardClass = [
     'catalog-card',
-    inCart && !isLocked ? 'in-cart' : '',
-    isPendingPlan ? 'in-pending-plan' : '',
-    isApprovedPlan ? 'in-approved-plan' : '',
+    inCart || isLocked ? 'in-cart' : '',
     isAchieved ? 'achieved' : '',
   ].filter(Boolean).join(' ');
 
@@ -61,9 +62,9 @@ export default function CatalogCard({
               <i className="ri-checkbox-circle-fill"></i> Done
             </span>
           )}
-          {!isAchieved && (inCart || isPendingPlan || isApprovedPlan) && (
-            <span className={`catalog-card-badge ${isApprovedPlan ? 'badge-approved-plan' : isPendingPlan ? 'badge-pending-plan' : 'badge-in-plan'}`}>
-              <i className="ri-time-line"></i> {isApprovedPlan ? 'This Q' : isPendingPlan ? 'TL Approval' : 'In plan'}
+          {!isAchieved && (inCart || isLocked) && (
+            <span className="catalog-card-badge badge-in-plan">
+              <i className="ri-time-line"></i> In plan
             </span>
           )}
           {!isAchieved && item.required && (
@@ -104,13 +105,12 @@ export default function CatalogCard({
           <div className="catalog-action-icon achieved" title="Already achieved">
             <i className="ri-checkbox-circle-fill"></i>
           </div>
-        ) : isPendingPlan ? (
-          <div className="catalog-action-icon pending" title="Waiting for team leader approval">
-            <i className="ri-user-line"></i>
-          </div>
-        ) : isApprovedPlan ? (
-          <div className="catalog-action-icon locked" title="Locked in approved plan">
-            <i className="ri-time-line"></i>
+        ) : isLocked ? (
+          <div
+            className="catalog-action-icon locked"
+            title={`Locked — your plan is ${isApprovedPlan ? 'approved' : 'awaiting approval'}. Manage it in My Plan.`}
+          >
+            <i className="ri-lock-line"></i>
           </div>
         ) : item.repeatable ? (
           quantity > 0 ? (

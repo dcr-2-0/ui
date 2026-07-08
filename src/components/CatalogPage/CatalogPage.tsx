@@ -1,13 +1,29 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { CatalogItem, CertificationItem, RoadmapItem, RoadmapCert } from '../../data/types';
 import type { AuthUser } from '../../hooks/useAuth';
 import { SKILL_TAGS, PROVIDER_TAGS } from '../../data/catalog/tags';
 import CatalogCard from './CatalogCard';
+import GlassSelect from '../GlassSelect/GlassSelect';
 import ItemComments from './ItemComments';
 import './CatalogPage.css';
 
 type SortOption = 'category' | 'points-desc' | 'points-asc';
 type ViewMode = 'grid' | 'list';
+
+/** Grid/list preference persists across sessions */
+const VIEW_STORAGE_KEY = 'dcr-catalog-view';
+
+/** Per-section UI state (search/filters) survives navigation within a session */
+interface CachedPageState {
+  search: string;
+  tags: string[];
+  hideAchieved: boolean;
+}
+const pageStateCache = new Map<string, CachedPageState>();
+
+/** Sort is shared across all catalog sections (session-wide) */
+let sharedSort: SortOption = 'category';
 
 interface CatalogPageProps {
   items: CatalogItem[];
@@ -25,6 +41,8 @@ interface CatalogPageProps {
   onNavigateToCert?: (certId: string, roadmapId: string, roadmapName: string) => void;
   modalBackNav?: { label: string; onClick: () => void };
   authUser?: AuthUser | null;
+  /** Identifies the catalog section (tech, professionalism, …) for state caching */
+  pageKey?: string;
 }
 
 export default function CatalogPage({
@@ -43,13 +61,84 @@ export default function CatalogPage({
   onNavigateToCert,
   modalBackNav,
   authUser,
+  pageKey = 'catalog',
 }: CatalogPageProps) {
-  const [sort, setSort] = useState<SortOption>('category');
-  const [view, setView] = useState<ViewMode>('grid');
-  const [search, setSearch] = useState('');
+  const cached = pageStateCache.get(pageKey);
+  const [sort, setSort] = useState<SortOption>(sharedSort);
+  const [view, setView] = useState<ViewMode>(() =>
+    localStorage.getItem(VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid',
+  );
+  const [search, setSearch] = useState(cached?.search ?? '');
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  const [hideAchieved, setHideAchieved] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(
+    () => new Set(cached?.tags ?? []),
+  );
+  const [hideAchieved, setHideAchieved] = useState(cached?.hideAchieved ?? false);
+
+  // Write-through: remember this section's state for the rest of the session
+  useEffect(() => {
+    pageStateCache.set(pageKey, {
+      search,
+      tags: Array.from(selectedTags),
+      hideAchieved,
+    });
+  }, [pageKey, search, selectedTags, hideAchieved]);
+
+  // Sort applies session-wide across all catalog sections
+  useEffect(() => {
+    sharedSort = sort;
+  }, [sort]);
+
+  // Grid/list is a lasting preference
+  useEffect(() => {
+    localStorage.setItem(VIEW_STORAGE_KEY, view);
+  }, [view]);
+
+  // ── Sticky toolbar ─────────────────────────────────────
+  // A 1px sentinel sits above the toolbar; when it scrolls out of the
+  // content area the toolbar is pinned and switches to its condensed look
+  // (background chrome + Filters button replacing the scrolled-away chips).
+  const [stuck, setStuck] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const root = el.closest('.content-area');
+    const io = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { root: root instanceof Element ? root : null, threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Desktop: the panel only makes sense while pinned (the full chip rows are
+  // visible again once unpinned). Small screens keep the button full-time,
+  // so leave the panel alone there.
+  useEffect(() => {
+    if (!stuck && window.matchMedia('(min-width: 701px)').matches) {
+      setFiltersOpen(false);
+    }
+  }, [stuck]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!toolbarRef.current?.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltersOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filtersOpen]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTags((prev) => {
@@ -136,9 +225,63 @@ export default function CatalogPage({
     }
   };
 
+  // Tag chip rows — rendered in the full block at rest, and inside the
+  // condensed Filters panel when the toolbar is pinned / on small screens
+  const renderTagFilters = () => (
+    <>
+      <div className="catalog-tag-groups">
+        <div className="catalog-tag-group">
+          <span className="catalog-tag-group-label">Topic</span>
+          <div className="catalog-tag-pills">
+            {SKILL_TAGS.map((tag) => {
+              const active = selectedTags.has(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  className={`catalog-tag-pill${active ? ' active' : ''}`}
+                  style={active ? { background: tag.color, borderColor: tag.color } : undefined}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  <i className={tag.icon} style={active ? {} : { color: tag.color }}></i>
+                  {tag.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="catalog-tag-group">
+          <span className="catalog-tag-group-label">Provider</span>
+          <div className="catalog-tag-pills">
+            {PROVIDER_TAGS.map((tag) => {
+              const active = selectedTags.has(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  className={`catalog-tag-pill${active ? ' active' : ''}`}
+                  style={active ? { background: tag.color, borderColor: tag.color } : undefined}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  <i className={tag.icon} style={active ? {} : { color: tag.color }}></i>
+                  {tag.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      {selectedTags.size > 0 && (
+        <button className="catalog-tag-clear" onClick={() => setSelectedTags(new Set())}>
+          <i className="ri-close-circle-line"></i> Clear filters
+        </button>
+      )}
+    </>
+  );
+
   return (
     <div className="catalog-page">
-      <div className="catalog-toolbar">
+      <div ref={sentinelRef} className="catalog-toolbar-sentinel" aria-hidden="true"></div>
+      {/* Bar chrome also applies while the filters panel is open (small screens can open it unpinned) */}
+      <div ref={toolbarRef} className={`catalog-toolbar${stuck || filtersOpen ? ' is-stuck' : ''}`}>
         {/* Left: search + achieved toggle */}
         <div className="catalog-toolbar-left">
           <div className="catalog-search-wrapper">
@@ -156,6 +299,11 @@ export default function CatalogPage({
               </button>
             )}
           </div>
+          <span className="catalog-results-count">
+            {sorted.length === items.length
+              ? `${items.length} items`
+              : `${sorted.length} of ${items.length}`}
+          </span>
           {achievedCount > 0 && (
             <button
               className={`catalog-achieved-toggle${hideAchieved ? ' active' : ''}`}
@@ -175,17 +323,30 @@ export default function CatalogPage({
               <i className="ri-add-circle-line"></i> Add Required
             </button>
           )}
+          {hasTags && (
+            <button
+              className={`catalog-filters-btn${filtersOpen ? ' open' : ''}`}
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+            >
+              <i className="ri-filter-3-line"></i>
+              Filters
+              {selectedTags.size > 0 && (
+                <span className="catalog-filters-count">{selectedTags.size}</span>
+              )}
+            </button>
+          )}
           <div className="catalog-sort-group">
             <span className="catalog-sort-label">Sort By:</span>
-            <select
-              className="catalog-sort-select"
+            <GlassSelect
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
-            >
-              <option value="category">Category Order</option>
-              <option value="points-desc">Points: High to Low</option>
-              <option value="points-asc">Points: Low to High</option>
-            </select>
+              onChange={(v) => setSort(v as SortOption)}
+              options={[
+                { value: 'category', label: 'Category Order' },
+                { value: 'points-desc', label: 'Points: High to Low' },
+                { value: 'points-asc', label: 'Points: Low to High' },
+              ]}
+            />
           </div>
           <div className="catalog-view-toggle">
             <button
@@ -204,57 +365,13 @@ export default function CatalogPage({
             </button>
           </div>
         </div>
+
+        {hasTags && filtersOpen && (
+          <div className="catalog-filters-panel">{renderTagFilters()}</div>
+        )}
       </div>
 
-      {hasTags && (
-        <div className="catalog-tag-filters">
-          <div className="catalog-tag-groups">
-            <div className="catalog-tag-group">
-              <span className="catalog-tag-group-label">Topic</span>
-              <div className="catalog-tag-pills">
-                {SKILL_TAGS.map((tag) => {
-                  const active = selectedTags.has(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      className={`catalog-tag-pill${active ? ' active' : ''}`}
-                      style={active ? { background: tag.color, borderColor: tag.color } : undefined}
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      <i className={tag.icon} style={active ? {} : { color: tag.color }}></i>
-                      {tag.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="catalog-tag-group">
-              <span className="catalog-tag-group-label">Provider</span>
-              <div className="catalog-tag-pills">
-                {PROVIDER_TAGS.map((tag) => {
-                  const active = selectedTags.has(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      className={`catalog-tag-pill${active ? ' active' : ''}`}
-                      style={active ? { background: tag.color, borderColor: tag.color } : undefined}
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      <i className={tag.icon} style={active ? {} : { color: tag.color }}></i>
-                      {tag.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          {selectedTags.size > 0 && (
-            <button className="catalog-tag-clear" onClick={() => setSelectedTags(new Set())}>
-              <i className="ri-close-circle-line"></i> Clear filters
-            </button>
-          )}
-        </div>
-      )}
+      {hasTags && <div className="catalog-tag-filters">{renderTagFilters()}</div>}
 
       {sorted.length === 0 ? (
         <div className="catalog-empty">
@@ -293,7 +410,7 @@ export default function CatalogPage({
             const isLocked = isPendingPlan || isApprovedPlan;
             return (
               <div
-                className={`catalog-list-item${inCart && !isLocked ? ' in-cart' : ''}${isPendingPlan ? ' in-pending-plan' : ''}${isApprovedPlan ? ' in-approved-plan' : ''}${achieved ? ' achieved' : ''}`}
+                className={`catalog-list-item${inCart || isLocked ? ' in-cart' : ''}${achieved ? ' achieved' : ''}`}
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
               >
@@ -301,13 +418,13 @@ export default function CatalogPage({
                   <div className="catalog-list-achieved" title="Already achieved">
                     <i className="ri-checkbox-circle-fill"></i>
                   </div>
-                ) : isPendingPlan ? (
-                  <button className="catalog-list-add pending" title="Waiting for team leader approval" disabled>
-                    <i className="ri-user-line"></i>
-                  </button>
-                ) : isApprovedPlan ? (
-                  <button className="catalog-list-add locked" title="Locked in approved plan" disabled>
-                    <i className="ri-time-line"></i>
+                ) : isLocked ? (
+                  <button
+                    className="catalog-list-add locked"
+                    title={`Locked — your plan is ${isApprovedPlan ? 'approved' : 'awaiting approval'}. Manage it in My Plan.`}
+                    disabled
+                  >
+                    <i className="ri-lock-line"></i>
                   </button>
                 ) : item.repeatable && onAddItem && onRemoveItem ? (
                   qty > 0 ? (
@@ -354,6 +471,9 @@ export default function CatalogPage({
                 </div>
                 <div className="catalog-list-badges">
                   {achieved && <span className="catalog-list-badge achieved">Achieved</span>}
+                  {!achieved && (inCart || isLocked) && (
+                    <span className="catalog-list-badge in-plan">In plan</span>
+                  )}
                   {!achieved && item.required && <span className="catalog-list-badge required">Required</span>}
                   {!achieved && item.promoted && !item.required && (
                     <span className="catalog-list-badge promoted">Promoted</span>
@@ -380,6 +500,14 @@ export default function CatalogPage({
         const cert = selectedItem.category === 'tech' ? selectedItem as CertificationItem : null;
         const roadmap = selectedItem.category === 'roadmaps' ? selectedItem as RoadmapItem : null;
 
+        // Same 3-state logic as the cards: none / in plan / achieved,
+        // with the plan's lock (submitted/approved) affecting only the action
+        const modalAchieved = isAchieved?.(selectedItem.id) ?? false;
+        const modalPlanStatus = getPlanItemStatus?.(selectedItem.id);
+        const modalLocked = modalPlanStatus === 'pending' || modalPlanStatus === 'approved';
+        const modalInCart = isInCart(selectedItem.id);
+        const modalQty = getQuantity?.(selectedItem.id) ?? 0;
+
         // Build ordered slots: single cert or a choice group (pick one)
         type CertSlot = { type: 'single'; cert: RoadmapCert } | { type: 'choice'; group: string; certs: RoadmapCert[] };
         const certSlots: CertSlot[] = [];
@@ -401,7 +529,8 @@ export default function CatalogPage({
           sum + (slot.type === 'single' ? slot.cert.points : Math.min(...slot.certs.map(c => c.points))), 0);
         const maxPoints = certSlots.reduce((sum, slot) =>
           sum + (slot.type === 'single' ? slot.cert.points : Math.max(...slot.certs.map(c => c.points))), 0);
-        return (
+        // Portal to <body> so the backdrop covers the whole viewport
+        return createPortal(
           <div className="catalog-modal-backdrop" onClick={closeModal}>
             <div className="catalog-modal" onClick={(e) => e.stopPropagation()}>
               <div className="catalog-modal-topbar" />
@@ -422,6 +551,26 @@ export default function CatalogPage({
                     <h2 className="catalog-modal-name">{selectedItem.name}</h2>
                     {selectedItem.subcategory && (
                       <span className="catalog-modal-sub">{selectedItem.subcategory}</span>
+                    )}
+                    {(modalAchieved || modalInCart || modalLocked || selectedItem.required || selectedItem.promoted) && (
+                      <div className="catalog-modal-badges">
+                        {modalAchieved && (
+                          <span className="catalog-card-badge badge-achieved">
+                            <i className="ri-checkbox-circle-fill"></i> Done
+                          </span>
+                        )}
+                        {!modalAchieved && (modalInCart || modalLocked) && (
+                          <span className="catalog-card-badge badge-in-plan">
+                            <i className="ri-time-line"></i> In plan
+                          </span>
+                        )}
+                        {!modalAchieved && selectedItem.required && (
+                          <span className="catalog-card-badge badge-required">Required</span>
+                        )}
+                        {!modalAchieved && selectedItem.promoted && !selectedItem.required && (
+                          <span className="catalog-card-badge badge-promoted">Promoted</span>
+                        )}
+                      </div>
                     )}
                     <p className="catalog-modal-points">
                       {selectedItem.promoted && selectedItem.promotedPoints ? (
@@ -529,7 +678,9 @@ export default function CatalogPage({
                         <div className="catalog-modal-detail-item">
                           <span className="detail-label">Price</span>
                           <span className="detail-value">
-                            {cert.price === 0 ? 'Free' : `$${cert.price} USD`}
+                            {cert.price === 0
+                              ? 'Free'
+                              : `$${Number.isInteger(cert.price) ? cert.price : cert.price.toFixed(2)} USD`}
                           </span>
                         </div>
                       )}
@@ -625,8 +776,66 @@ export default function CatalogPage({
                   <ItemComments itemId={selectedItem.id} authUser={authUser ?? null} />
                 )}
               </div>
+
+              {/* Sticky action footer — mirrors the card action logic */}
+              <div className="catalog-modal-footer">
+                {modalAchieved ? (
+                  <div className="catalog-modal-state-chip achieved">
+                    <i className="ri-checkbox-circle-fill"></i> Already achieved
+                  </div>
+                ) : modalLocked ? (
+                  <div className="catalog-modal-state-chip locked">
+                    <i className="ri-lock-line"></i>
+                    In plan — locked while your plan is{' '}
+                    {modalPlanStatus === 'approved' ? 'approved' : 'awaiting approval'}
+                  </div>
+                ) : selectedItem.repeatable && onAddItem && onRemoveItem && modalQty > 0 ? (
+                  <div className="catalog-modal-qty-row">
+                    <span className="catalog-modal-qty-label">
+                      In plan ×{modalQty}
+                    </span>
+                    <div className="catalog-qty-controls">
+                      <button
+                        className="catalog-qty-btn"
+                        onClick={() => onRemoveItem(selectedItem.id)}
+                        title="Remove one"
+                      >
+                        <i className="ri-subtract-line"></i>
+                      </button>
+                      <span className="catalog-qty-count">{modalQty}</span>
+                      <button
+                        className="catalog-qty-btn"
+                        onClick={() => onAddItem(selectedItem)}
+                        title="Add one more"
+                      >
+                        <i className="ri-add-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                ) : modalInCart ? (
+                  <button
+                    className="catalog-modal-action added"
+                    onClick={() => handleListToggle(selectedItem)}
+                  >
+                    <span className="cma-default">
+                      <i className="ri-check-line"></i> In Plan
+                    </span>
+                    <span className="cma-hover">
+                      <i className="ri-close-line"></i> Remove from Plan
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    className="catalog-modal-action add"
+                    onClick={() => handleListToggle(selectedItem)}
+                  >
+                    <i className="ri-add-line"></i> Add to Plan
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </div>,
+          document.body,
         );
       })()}
     </div>

@@ -12,11 +12,9 @@
 
 /* Card */
 .form-card {
-    background: var(--glass-elevated);
-    backdrop-filter: var(--blur-light);
-    -webkit-backdrop-filter: var(--blur-light);
+    background: var(--glass-surface);
     border: 1px solid var(--glass-border);
-    border-radius: 1rem;
+    border-radius: 14px;
     padding: 2rem;
     box-shadow: var(--shadow-medium);
     cursor: pointer;
@@ -155,11 +153,9 @@
 }
 
 .form-embed-wrapper {
-    background: var(--glass-elevated);
-    backdrop-filter: var(--blur-light);
-    -webkit-backdrop-filter: var(--blur-light);
+    background: var(--glass-surface);
     border: 1px solid var(--glass-border);
-    border-radius: 1rem;
+    border-radius: 14px;
     padding: 1.5rem;
     box-shadow: var(--shadow-medium);
     overflow: hidden;

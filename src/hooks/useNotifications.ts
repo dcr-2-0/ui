@@ -111,3 +111,16 @@ export async function createNotification(data: CreateNotificationData): Promise<
     metadata: data.metadata ?? {},
   });
 }
+
+/**
+ * Queue an email via the `emailQueue` collection (Firebase Trigger Email
+ * extension schema). Fire-and-forget from UI flows — callers should .catch()
+ * so a mail failure never blocks the main action.
+ */
+export async function queueEmail(to: string, subject: string, html: string): Promise<void> {
+  await addDoc(collection(db, 'emailQueue'), {
+    createdAt: new Date().toISOString(),
+    to,
+    message: { subject, html },
+  });
+}

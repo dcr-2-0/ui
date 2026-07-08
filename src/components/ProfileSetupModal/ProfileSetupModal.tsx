@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTeamLeaders } from '../../hooks/useTeamLeaders';
 import { uploadAchievementProofFile, ACCEPTED_PROOF_TYPES } from '../../hooks/useAchievements';
 import { tech } from '../../data/catalog/tech';
 import type { CatalogItem } from '../../data/types';
+import GlassSelect from '../GlassSelect/GlassSelect';
 import './ProfileSetupModal.css';
 
 interface ProfileSetupModalProps {
@@ -167,7 +169,8 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
     }
   };
 
-  return (
+  // Portal to <body> so the backdrop covers the whole viewport
+  return createPortal(
     <div className="profile-setup-backdrop">
       <div className="profile-setup-modal">
         {/* Header */}
@@ -194,26 +197,20 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
                   Who is your team leader?
                   <span className="required">*</span>
                 </label>
-                <select
-                  id="team-leader"
-                  className="form-select"
+                <GlassSelect
+                  className="form-glass-select"
                   value={selectedTeamLeaderId}
-                  onChange={(e) => {
-                    setSelectedTeamLeaderId(e.target.value);
+                  onChange={(v) => {
+                    setSelectedTeamLeaderId(v);
                     setError(null);
                   }}
-                  required
-                  disabled={isSubmitting}
-                >
-                  <option value="">
-                    {loadingLeaders ? 'Loading...' : 'Select your team leader...'}
-                  </option>
-                  {teamLeaders.map((leader) => (
-                    <option key={leader.uid} value={leader.uid}>
-                      {leader.displayName}
-                    </option>
-                  ))}
-                </select>
+                  placeholder={loadingLeaders ? 'Loading…' : 'Select your team leader…'}
+                  searchable={teamLeaders.length > 8}
+                  options={teamLeaders.map((leader) => ({
+                    value: leader.uid,
+                    label: leader.displayName,
+                  }))}
+                />
               </div>
             )}
 
@@ -224,20 +221,18 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
                 What is your current level?
                 <span className="required">*</span>
               </label>
-              <select
-                id="current-level"
-                className="form-select"
-                value={selectedLevel ?? 0}
-                onChange={(e) => setSelectedLevel(parseInt(e.target.value, 10))}
-                disabled={isSubmitting}
-              >
-                <option value={0}>No level yet</option>
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((level) => (
-                  <option key={level} value={level}>
-                    Level {level}
-                  </option>
-                ))}
-              </select>
+              <GlassSelect
+                className="form-glass-select"
+                value={String(selectedLevel ?? 0)}
+                onChange={(v) => setSelectedLevel(parseInt(v, 10))}
+                options={[
+                  { value: '0', label: 'No level yet' },
+                  ...Array.from({ length: 10 }, (_, i) => i + 1).map((level) => ({
+                    value: String(level),
+                    label: `Level ${level}`,
+                  })),
+                ]}
+              />
               <p className="form-hint">
                 Select your current level in the DCR program
               </p>
@@ -345,23 +340,22 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
                     <label htmlFor="achievement-item" className="form-label-small">
                       Tech Certification *
                     </label>
-                    <select
-                      id="achievement-item"
-                      className="form-select-small"
+                    <GlassSelect
+                      className="form-glass-select-small"
                       value={newAchievement.itemId}
-                      onChange={(e) =>
-                        setNewAchievement((prev) => ({ ...prev, itemId: e.target.value }))
+                      onChange={(v) =>
+                        setNewAchievement((prev) => ({ ...prev, itemId: v }))
                       }
-                    >
-                      <option value="">Select certification...</option>
-                      {tech
+                      placeholder="Select certification…"
+                      searchable
+                      options={tech
                         .filter((item) => !achievements.some((a) => a.itemId === item.id))
-                        .map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} ({item.points} pts)
-                          </option>
-                        ))}
-                    </select>
+                        .map((item) => ({
+                          value: item.id,
+                          label: item.name,
+                          sub: `${item.points} pts`,
+                        }))}
+                    />
                   </div>
 
                   <div className="form-group">
@@ -539,6 +533,7 @@ export function ProfileSetupModal({ onComplete, onCancel, isTeamLeader = false, 
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

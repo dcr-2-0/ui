@@ -1,0 +1,208 @@
+/* ==========================================
+   Quarter lifecycle stepper
+   ========================================== */
+
+.plan-stepper {
+  display: flex;
+  align-items: flex-start;
+  background: var(--glass-surface);
+  border: 1px solid var(--theme-bg);
+  border-radius: 14px;
+  padding: 16px 12px 14px;
+  margin-bottom: 1rem;
+}
+
+.plan-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plan-step-track {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.plan-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--glass-border);
+}
+
+.plan-step-line.filled {
+  background: var(--success-color);
+}
+
+.plan-step-line.invisible {
+  visibility: hidden;
+}
+
+.plan-step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin: 0 4px;
+  border: 2px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.plan-step.done .plan-step-dot {
+  border-color: var(--success-color);
+  background: var(--success-color);
+  color: #0d1a10;
+  font-size: 0.9rem;
+}
+
+.plan-step.current .plan-step-dot {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.plan-step.error .plan-step-dot {
+  border-color: var(--error-color);
+  background: var(--error-color);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.plan-step-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.25;
+  padding: 0 2px;
+}
+
+.plan-step.current .plan-step-label,
+.plan-step.error .plan-step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.plan-step.done .plan-step-label {
+  color: var(--text-secondary);
+}
+
+.plan-step-hint {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--error-color);
+  text-align: center;
+  line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+  .plan-step-label {
+    display: none;
+  }
+
+  .plan-step.current .plan-step-label,
+  .plan-step.error .plan-step-label {
+    display: block;
+  }
+}
+
+/* Step tooltips (pure CSS — read-only text) */
+.plan-step {
+  position: relative;
+}
+
+.plan-step-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease 0.35s, transform 0.2s ease 0.35s;
+  z-index: 60;
+}
+
+.plan-step:hover .plan-step-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Keep edge tooltips inside the panel */
+.plan-step:first-child .plan-step-tooltip {
+  left: 0;
+  transform: translateX(0) translateY(-4px);
+}
+
+.plan-step:first-child:hover .plan-step-tooltip {
+  transform: translateX(0) translateY(0);
+}
+
+.plan-step:last-child .plan-step-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(-4px);
+}
+
+.plan-step:last-child:hover .plan-step-tooltip {
+  transform: translateX(0) translateY(0);
+}
+
+/* No hover tooltips on touch devices */
+@media (hover: none) {
+  .plan-step-tooltip {
+    display: none;
+  }
+}
+
+/* The part of the tooltip that asks the user to act */
+.plan-step-tooltip-action {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+/* ==========================================
+   Compact variant (modals / narrow panels)
+   ========================================== */
+
+.plan-stepper-compact {
+  padding: 12px 8px 10px;
+}
+
+.plan-stepper-compact .plan-step-dot {
+  width: 22px;
+  height: 22px;
+  font-size: 0.62rem;
+  margin: 0 2px;
+}
+
+.plan-stepper-compact .plan-step-label {
+  display: none;
+}
+
+.plan-stepper-compact .plan-step.current .plan-step-label,
+.plan-stepper-compact .plan-step.error .plan-step-label {
+  display: block;
+}

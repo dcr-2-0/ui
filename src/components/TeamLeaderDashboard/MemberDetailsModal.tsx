@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import PlanStepper from '../PlanStepper/PlanStepper';
+import { createPortal } from 'react-dom';
 import { useAchievements } from '../../hooks/useAchievements';
 import { usePlanHistory } from '../../hooks/usePlanHistory';
 import { levels, MANDATORY_ITEM_IDS } from '../../data/levels';
@@ -32,7 +34,6 @@ const PILLAR_ORDER = ['tech', 'knowledge-unlock', 'collaboration', 'professional
 
 export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<'plan' | 'plans' | 'summary'>('plan');
-  const [showCertList, setShowCertList] = useState(false);
   const [expandedHistoryQuarter, setExpandedHistoryQuarter] = useState<string | null>(null);
   const { achievements, isLoading } = useAchievements(member.uid);
   const { planHistory, isLoading: histLoading } = usePlanHistory(member.uid);
@@ -47,7 +48,7 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
   const planItems = member.plan?.items || [];
   const planStatus = member.plan?.planStatus;
   const targetLevel =
-    member.plan?.selectedLevelId || (member.currentLevel ? member.currentLevel + 1 : null);
+    member.plan?.selectedLevelId || (member.currentLevel != null ? member.currentLevel + 1 : null);
   const carryOverPoints = member.plan?.carryOverPoints ?? 0;
   const totalPoints =
     planItems.reduce((sum, item) => sum + (item.promotedPoints ?? item.points), 0) + carryOverPoints;
@@ -86,44 +87,40 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
     return 'req-miss';
   };
 
-  // Summary stats (2026+ approved achievements)
-  const year2026Approved = achievements.filter(
-    (a: Achievement) =>
-      a.status === 'approved' &&
-      a.quarter &&
-      parseInt(a.quarter.split('-')[1]) >= 2026,
-  );
-  // Tech certs: quarterly achievements collection + historical inline field
-  const historicalTechCerts: AchievedItem[] = (member.achieved?.items ?? []).filter(
-    (a) => a.status === 'approved' && a.item.category === 'tech',
-  );
-  const quarterlyTechCerts = achievements.filter(
-    (a: Achievement) => a.status === 'approved' && a.item.category === 'tech',
-  );
-  const approvedTechCerts: { key: string; item: Achievement['item']; quarter: string | null }[] = [
-    ...quarterlyTechCerts.map((a: Achievement) => ({ key: a.id, item: a.item, quarter: a.quarter })),
-    ...historicalTechCerts.map((a: AchievedItem, i: number) => ({ key: `hist-${a.itemId}-${i}`, item: a.item, quarter: null })),
-  ];
-  const yearStats = {
-    points: year2026Approved.reduce(
-      (s: number, a: Achievement) => s + (a.item.promotedPoints ?? a.item.points),
-      0,
-    ),
-    certs: approvedTechCerts.length,
-    magazineArticles: year2026Approved.filter((a: Achievement) => a.item.id === 'ku-article-magazine').length,
-    externalArticles: year2026Approved.filter((a: Achievement) => a.item.id === 'ku-article-external').length,
-    reviewer: year2026Approved.filter((a: Achievement) => a.item.id === 'col-peer-reviewer').length,
-    reviewee: year2026Approved.filter((a: Achievement) => a.item.id === 'col-peer-reviewee').length,
+  // Certifications — same merge as the Profile page:
+  //  1. quarterly achievements collection (approved, tech)
+  //  2. certs completed in level-up-approved quarters (planHistory)
+  //  3. historical certs from onboarding (achieved.items, approved)
+  // (The old summary counters read only the achievements collection, which
+  //  nothing writes to — they showed zeros regardless of reality.)
+  const certSeen = new Set<string>();
+  const certEntries: { key: string; item: Achievement['item']; quarter: string | null }[] = [];
+  const pushCert = (key: string, item: Achievement['item'], quarter: string | null) => {
+    if (item.category !== 'tech') return;
+    if (item.id.startsWith('extra-')) return; // renewal/circle bonuses aren't certs
+    if (certSeen.has(item.id)) return;
+    certSeen.add(item.id);
+    certEntries.push({ key, item, quarter });
   };
-
-  const summaryStatItems = [
-    { icon: 'ri-trophy-line', value: yearStats.points.toLocaleString(), label: 'Points earned' },
-    { icon: 'ri-award-line', value: String(yearStats.certs), label: 'Certifications', clickable: true },
-    { icon: 'ri-newspaper-line', value: String(yearStats.magazineArticles), label: 'Magazine articles' },
-    { icon: 'ri-article-line', value: String(yearStats.externalArticles), label: 'External articles' },
-    { icon: 'ri-eye-line', value: String(yearStats.reviewer), label: 'Code reviews done' },
-    { icon: 'ri-eye-2-line', value: String(yearStats.reviewee), label: 'Reviews received' },
-  ];
+  achievements
+    .filter((a: Achievement) => a.status === 'approved' && a.item.category === 'tech')
+    .forEach((a: Achievement) => pushCert(a.id, a.item, a.quarter));
+  planHistory
+    .filter((e: PlanHistoryEntry) => e.status === 'approved')
+    .forEach((e: PlanHistoryEntry) => {
+      e.items.forEach((item, idx) => {
+        const key = item.planItemKey ?? `${item.id}-${idx}`;
+        // Only items explicitly marked complete during level-up review count —
+        // a TL-approved plan alone means intent, not achievement.
+        const done =
+          (e.completedItemKeys?.includes(key) ?? false) ||
+          (e.completedItemKeys?.some((k) => k.startsWith(`${item.id}-`)) ?? false);
+        if (done) pushCert(`ph-${e.quarter}-${item.id}`, item, e.quarter);
+      });
+    });
+  (member.achieved?.items ?? [])
+    .filter((a: AchievedItem) => a.status === 'approved' && a.item.category === 'tech')
+    .forEach((a: AchievedItem, i: number) => pushCert(`hist-${a.itemId}-${i}`, a.item, null));
 
   const getPlanStatusProps = (status: PlanHistoryEntry['status']) => {
     if (status === 'approved') return { icon: 'ri-checkbox-circle-line', cls: 'plan-hist-approved' };
@@ -131,7 +128,8 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
     return { icon: 'ri-time-line', cls: 'plan-hist-pending' };
   };
 
-  return (
+  // Portal to <body> so the backdrop covers the whole viewport
+  return createPortal(
     <div className="member-details-backdrop" onClick={onClose}>
       <div className="member-details-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -168,7 +166,7 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
           </div>
           <div className="member-details-header-right">
             <div className={`level-badge ${getLevelColor(member.currentLevel)}`}>
-              <span className="level-number">{member.currentLevel || '?'}</span>
+              <span className="level-number">{member.currentLevel ?? '?'}</span>
               <span className="level-label">Level</span>
             </div>
             <button className="modal-close-btn" onClick={onClose} aria-label="Close">
@@ -201,8 +199,11 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
             className={`details-tab-btn ${activeTab === 'summary' ? 'active' : ''}`}
             onClick={() => setActiveTab('summary')}
           >
-            <i className="ri-bar-chart-2-line"></i>
-            Summary
+            <i className="ri-award-line"></i>
+            Certifications
+            {certEntries.length > 0 && (
+              <span className="tab-count">({certEntries.length})</span>
+            )}
           </button>
         </div>
 
@@ -210,12 +211,19 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
         <div className="member-details-body">
           {activeTab === 'plan' && (
             <div className="plan-tab">
+              {/* Where the plan stands in the quarter lifecycle */}
+              <PlanStepper
+                compact
+                planStatus={member.plan?.planStatus}
+                completionStatus={member.plan?.completionStatus}
+              />
+
               {/* Level Progression */}
               <div className="plan-level-progression">
                 <div className="progression-side">
                   <span className="progression-label">Current</span>
                   <div className={`level-badge-sm ${getLevelColor(member.currentLevel)}`}>
-                    Level {member.currentLevel ?? '?'}
+                    Level {member.currentLevel != null ? member.currentLevel : '?'}
                   </div>
                 </div>
                 <i className="ri-arrow-right-line progression-arrow"></i>
@@ -441,6 +449,12 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
                             </div>
                             <div className="modal-plan-meta">
                               <span>{entry.items.length} items · {entry.totalPoints.toLocaleString()} pts</span>
+                              {(entry.carryOverPoints ?? 0) > 0 && (
+                                <span className="modal-plan-carryover">
+                                  <i className="ri-arrow-right-up-line"></i>
+                                  +{entry.carryOverPoints!.toLocaleString()} carry-over
+                                </span>
+                              )}
                               {entry.resolvedAt && (
                                 <span>
                                   <i className="ri-calendar-line"></i>
@@ -492,6 +506,22 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
                                 </div>
                               ))}
                             </div>
+                            {(entry.carryOverPoints ?? 0) > 0 && (
+                              <div className="modal-plan-carryover-summary">
+                                <div className="modal-plan-carryover-line">
+                                  <span>Plan items</span>
+                                  <span>{entry.totalPoints.toLocaleString()} pts</span>
+                                </div>
+                                <div className="modal-plan-carryover-line carry-over-pts">
+                                  <span><i className="ri-arrow-right-up-line"></i> Prev. level carry-over</span>
+                                  <span>+{entry.carryOverPoints!.toLocaleString()} pts</span>
+                                </div>
+                                <div className="modal-plan-carryover-line modal-plan-carryover-total">
+                                  <span>Combined total</span>
+                                  <span>{(entry.totalPoints + entry.carryOverPoints!).toLocaleString()} pts</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </li>
@@ -504,62 +534,36 @@ export function MemberDetailsModal({ member, onClose }: MemberDetailsModalProps)
 
           {activeTab === 'summary' && (
             <div className="summary-tab">
-              {isLoading ? (
+              {isLoading || histLoading ? (
                 <div className="details-loading">
                   <div className="spinner"></div>
-                  <p>Loading achievements…</p>
+                  <p>Loading certifications…</p>
+                </div>
+              ) : certEntries.length === 0 ? (
+                <div className="details-empty" style={{ paddingTop: '1.5rem' }}>
+                  <i className="ri-award-line"></i>
+                  <p>No certifications yet — certifications earned in completed plans, or approved from past history, will appear here</p>
                 </div>
               ) : (
-                <>
-                  <p className="modal-summary-subtitle">2026 and on</p>
-                  <div className="modal-summary-stats">
-                    {summaryStatItems.map(({ icon, value, label, clickable }) => (
-                      <div
-                        key={label}
-                        className={`modal-summary-stat${clickable ? ' modal-summary-stat-clickable' : ''}`}
-                        onClick={clickable ? () => setShowCertList((v) => !v) : undefined}
-                        role={clickable ? 'button' : undefined}
-                        tabIndex={clickable ? 0 : undefined}
-                        onKeyDown={clickable ? (e) => e.key === 'Enter' && setShowCertList((v) => !v) : undefined}
-                      >
-                        <i className={`${icon} modal-summary-stat-icon`}></i>
-                        <span className="modal-summary-stat-value">{value}</span>
-                        <span className="modal-summary-stat-label">
-                          {label}
-                          {clickable && (
-                            <i className={`ri-arrow-${showCertList ? 'up' : 'down'}-s-line modal-summary-stat-arrow`}></i>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {showCertList && approvedTechCerts.length > 0 && (
-                    <ul className="modal-cert-list">
-                      {approvedTechCerts.map((c) => (
-                        <li key={c.key} className="modal-cert-row">
-                          {c.item.image ? (
-                            <img src={c.item.image} alt={c.item.name} className="modal-cert-img" />
-                          ) : (
-                            <i className="ri-award-line modal-cert-icon"></i>
-                          )}
-                          <span className="modal-cert-name">{c.item.name}</span>
-                          <span className="modal-cert-quarter">{c.quarter ?? 'Historical'}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {achievements.length === 0 && (
-                    <div className="details-empty" style={{ paddingTop: '1.5rem' }}>
-                      <i className="ri-bar-chart-2-line"></i>
-                      <p>No achievements recorded yet</p>
-                    </div>
-                  )}
-                </>
+                <ul className="modal-cert-list">
+                  {certEntries.map((c) => (
+                    <li key={c.key} className="modal-cert-row">
+                      {c.item.image ? (
+                        <img src={c.item.image} alt={c.item.name} className="modal-cert-img" />
+                      ) : (
+                        <i className="ri-award-line modal-cert-icon"></i>
+                      )}
+                      <span className="modal-cert-name">{c.item.name}</span>
+                      <span className="modal-cert-quarter">{c.quarter ?? 'Historical'}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

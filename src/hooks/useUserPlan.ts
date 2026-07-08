@@ -1,10 +1,53 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { doc, setDoc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, onSnapshot, collection, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
 import type { CatalogItem, PlanStatus, CompletionStatus, ProofEntry, PlanHistoryEntry } from '../data/types';
 import { levels, MANDATORY_ITEM_IDS } from '../data/levels';
+import { createNotification, queueEmail } from './useNotifications';
 import type { AuthUser } from './useAuth';
+
+/**
+ * Fire-and-forget "waiting for you" alert to the employee's team leader when
+ * a plan or a completed plan is submitted. Never blocks or fails the
+ * submission itself — errors are logged and swallowed.
+ */
+async function notifyTeamLeader(
+  employeeEmail: string,
+  employeeName: string,
+  kind: 'plan_submitted' | 'completion_submitted',
+  quarter: string,
+): Promise<void> {
+  try {
+    const snap = await getDoc(doc(db, 'users', employeeEmail));
+    const teamLeaderId = snap.exists()
+      ? ((snap.data().teamLeaderId as string | null) ?? null)
+      : null;
+    if (!teamLeaderId) return;
+
+    const isPlan = kind === 'plan_submitted';
+    await createNotification({
+      userId: teamLeaderId,
+      type: kind,
+      title: isPlan ? 'Plan Awaiting Approval' : 'Completed Plan Awaiting Review',
+      message: isPlan
+        ? `${employeeName} submitted their ${quarter} plan for your approval.`
+        : `${employeeName} submitted their completed ${quarter} plan for your review.`,
+      metadata: { employeeName, quarter },
+    });
+    await queueEmail(
+      teamLeaderId,
+      isPlan
+        ? `DCR: ${employeeName} submitted their ${quarter} plan`
+        : `DCR: ${employeeName} submitted their completed ${quarter} plan`,
+      isPlan
+        ? `<h2>Plan awaiting your approval</h2><p><strong>${employeeName}</strong> submitted their quarterly plan for <strong>${quarter}</strong>.</p><p>Review it in the DCR portal &rarr; TL Dashboard &rarr; Pending Approvals.</p>`
+        : `<h2>Completed plan awaiting your review</h2><p><strong>${employeeName}</strong> marked their <strong>${quarter}</strong> plan as completed and submitted it for review.</p><p>Review it in the DCR portal &rarr; TL Dashboard &rarr; Pending Approvals.</p>`,
+    );
+  } catch (err) {
+    console.error('[useUserPlan] Failed to notify team leader:', err);
+  }
+}
 
 
 interface UserPlan {
@@ -521,7 +564,9 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
         planData.carryOverPoints = carryOverPoints;
       }
 
-      // Write planHistory snapshot to subcollection
+      // Write planHistory snapshot to subcollection.
+      // carryOverPoints is stored separately for display — totalPoints must
+      // stay items-only (the carryover bank derives from totalPoints − threshold).
       const historyRef = doc(collection(userDocRef, 'planHistory'), quarter);
       const historyEntry: PlanHistoryEntry = {
         quarter,
@@ -530,6 +575,7 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
         totalPoints: totalPts,
         status: 'pending',
         submittedAt: now,
+        ...(carryOverPoints > 0 ? { carryOverPoints } : {}),
       };
 
       await Promise.all([
@@ -537,6 +583,7 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
         setDoc(historyRef, historyEntry),
       ]);
       console.log('[useUserPlan] Plan submitted, history snapshot written for', quarter);
+      void notifyTeamLeader(user.email, user.displayName, 'plan_submitted', quarter);
     } catch (err) {
       console.error('[useUserPlan] Error submitting plan:', err);
       setError('Failed to submit plan');
@@ -653,12 +700,13 @@ export function useUserPlan(user: AuthUser | null, currentQuarter: string): UseU
         completionSubmittedAt: now,
         completionRejectionReason: null,
       });
+      void notifyTeamLeader(user.email, user.displayName, 'completion_submitted', currentQuarter);
     } catch (err) {
       setCompletionStatus(prev);
       setCompletionSubmittedAt(undefined);
       throw err;
     }
-  }, [user, completionStatus, saveCompletionState]);
+  }, [user, completionStatus, saveCompletionState, currentQuarter]);
 
   const withdrawCompletedPlan = useCallback(async () => {
     if (!user) return;

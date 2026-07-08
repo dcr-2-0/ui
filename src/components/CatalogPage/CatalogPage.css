@@ -5,21 +5,60 @@
 
 /* ── Toolbar ─────────────────────────────────────────── */
 
+/* 1px marker above the toolbar — when it leaves the scroll container the
+   toolbar is pinned (IntersectionObserver toggles .is-stuck) */
+.catalog-toolbar-sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+}
+
 .catalog-toolbar {
+  position: sticky;
+  top: -24px; /* cancels the content-area's top padding so the pinned bar sits flush */
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  /* Bleed over the content-area's 30px side padding so the pinned bar
+     spans edge to edge; the matching padding keeps content aligned */
+  margin: 0 -30px 1rem;
+  padding: 10px 30px;
   flex-wrap: wrap;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-toolbar.is-stuck {
+  /* Near-solid accent-tinted chrome, like the page-title strip above —
+     the light blur underneath keeps a hint of the cards passing through */
+  background: color-mix(in srgb, var(--accent-color) 8%, rgba(255, 255, 255, 0.9));
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode already reads well with the doubled theme tint */
+[data-theme='dark'] .catalog-toolbar.is-stuck {
+  background: linear-gradient(var(--theme-bg), var(--theme-bg)),
+    linear-gradient(var(--theme-bg), var(--theme-bg));
+}
+
+.catalog-toolbar.is-stuck .catalog-sort-label {
+  display: none;
 }
 
 .catalog-toolbar-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  row-gap: 0.5rem;
   flex: 1;
-  min-width: 0;
+  /* Floor at the search field's own minimum — with min-width: 0 this group
+     could shrink below its content and the results count slid under the
+     right-side controls. Wrapping lets tight layouts stack instead. */
+  min-width: 160px;
+  flex-wrap: wrap;
 }
 
 .catalog-toolbar-right {
@@ -88,6 +127,78 @@
 
 .catalog-search-clear:hover {
   color: var(--text-primary);
+}
+
+/* Results count */
+.catalog-results-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Filters button — hidden at rest on desktop (full chip rows are visible);
+   appears when the toolbar is pinned, and full-time on small screens */
+.catalog-filters-btn {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.75rem;
+  background: var(--surface-container);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-toolbar.is-stuck .catalog-filters-btn {
+  display: inline-flex;
+}
+
+.catalog-filters-btn:hover {
+  border-color: var(--accent-color);
+}
+
+.catalog-filters-btn.open {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.catalog-filters-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chip rows revealed by the Filters button — an in-flow full-width row
+   inside the toolbar, so it shares the bar's glass background */
+.catalog-filters-panel {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.65rem 0 0.25rem;
+  border-top: 1px solid var(--glass-border);
+  animation: catalogPanelIn 0.15s ease;
+}
+
+@keyframes catalogPanelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
 }
 
 /* Achieved toggle */
@@ -246,7 +357,7 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 1.25rem;
-  padding-top: 1rem;
+  padding-top: 0.25rem;
 }
 
 .catalog-tag-groups {
@@ -351,31 +462,20 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: var(--glass-elevated);
-  border: 1px solid var(--glass-border-light);
-  border-radius: 0.75rem;
+  background: var(--glass-surface);
+  border: 1px solid var(--theme-bg);
+  border-radius: 14px;
   transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .catalog-list-item:hover {
-  border-color: var(--accent-color);
-  box-shadow: var(--shadow-light);
+  background: var(--theme-bg);
   transform: translateX(4px);
 }
 
 .catalog-list-item.in-cart {
   border-color: var(--accent-color);
   background: rgba(59, 130, 246, 0.03);
-}
-
-.catalog-list-item.in-pending-plan {
-  border-color: var(--pending-color, #0ea5e9);
-  background: rgba(14, 165, 233, 0.03);
-}
-
-.catalog-list-item.in-approved-plan {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.03);
 }
 
 .catalog-list-add {
@@ -400,29 +500,31 @@
   transform: scale(1.1);
 }
 
+/* In plan (draft) — solid blue, the strong state; green is reserved for
+   Achieved. The default + stays outlined, so plan items pop */
 .catalog-list-add.added {
-  background: var(--success-color);
-  border-color: var(--success-color);
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: #fff;
+}
+
+[data-theme="dark"] .catalog-list-add.added {
+  background: #60a5fa;
+  border-color: #60a5fa;
+  color: #10131c;
 }
 
 .catalog-list-add.added:hover {
   background: var(--error-color);
   border-color: var(--error-color);
+  color: #fff;
 }
 
-.catalog-list-add.pending {
-  background: rgba(14, 165, 233, 0.12);
-  border-color: var(--pending-color, #0ea5e9);
-  color: var(--pending-color, #0ea5e9);
-  cursor: default;
-  pointer-events: none;
-}
-
+/* Locked = in a submitted/approved plan; same blue family as "In plan" */
 .catalog-list-add.locked {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: #f59e0b;
-  color: #f59e0b;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: #3b82f6;
   cursor: default;
   pointer-events: none;
 }
@@ -466,12 +568,19 @@
   background: var(--error-color);
 }
 
+/* Amber = bonus points, matching the Home "pts bonus" treatment; also keeps
+   it distinct from the blue "In plan" state badge */
 .catalog-list-badge.promoted {
-  background: #3b82f6;
+  background: var(--warning-color);
 }
 
 .catalog-list-badge.achieved {
   background: var(--success-color);
+}
+
+/* Plan-state badge — same blue as the grid cards' "In plan" */
+.catalog-list-badge.in-plan {
+  background: #3b82f6;
 }
 
 .catalog-list-item.achieved {
@@ -580,23 +689,21 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--glass-elevated);
-  backdrop-filter: var(--blur-strong);
-  -webkit-backdrop-filter: var(--blur-strong);
+  background: var(--glass-bg-light);
   border: 1px solid var(--glass-border);
-  border-radius: 1.25rem;
+  border-radius: 10px;
   max-width: 720px;
   width: 100%;
   max-height: 85vh;
   overflow: hidden;
-  box-shadow: var(--shadow-heavy);
+  box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.4);
   animation: modal-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .catalog-modal-topbar {
-  height: 5px;
+  height: 3px;
   flex-shrink: 0;
-  background: linear-gradient(90deg, #3b82f6, var(--pending-color, #0ea5e9), #0ea5e9, #f59e0b);
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
 }
 
 .catalog-modal-body {
@@ -608,6 +715,132 @@
 @keyframes modal-in {
   from { opacity: 0; transform: scale(0.95) translateY(8px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+/* Status/attribute badges in the modal header — reuse the card badge chips */
+.catalog-modal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.6rem;
+}
+
+/* ── Sticky action footer ───────────────────────────── */
+
+.catalog-modal-footer {
+  flex-shrink: 0;
+  padding: 0.9rem 2.25rem 1.1rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.catalog-modal-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 0.625rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.catalog-modal-action.add {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  color: #fff;
+}
+
+.catalog-modal-action.add:hover {
+  box-shadow: 0 4px 14px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.catalog-modal-action.added {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+}
+
+[data-theme='dark'] .catalog-modal-action.added {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.catalog-modal-action.added:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Label swap on hover: "In Plan" → "Remove from Plan" */
+.catalog-modal-action .cma-default,
+.catalog-modal-action .cma-hover {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.catalog-modal-action .cma-hover {
+  display: none;
+}
+
+.catalog-modal-action.added:hover .cma-default {
+  display: none;
+}
+
+.catalog-modal-action.added:hover .cma-hover {
+  display: inline-flex;
+}
+
+/* Non-interactive state rows (achieved / locked) */
+.catalog-modal-state-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.catalog-modal-state-chip.achieved {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme='dark'] .catalog-modal-state-chip.achieved {
+  color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.3);
+}
+
+.catalog-modal-state-chip.locked {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme='dark'] .catalog-modal-state-chip.locked {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.3);
+}
+
+/* Repeatable items: qty stepper in the footer */
+.catalog-modal-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.catalog-modal-qty-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .catalog-modal-back {
@@ -1058,10 +1291,23 @@
   color: #10b981;
 }
 
+/* Sticky toolbar bleed tracks the content-area padding at each breakpoint */
+@media (max-width: 1024px) {
+  .catalog-toolbar {
+    top: -20px;
+    margin: 0 -20px 1rem;
+    padding: 10px 20px;
+  }
+
+}
+
 @media (max-width: 768px) {
   .catalog-toolbar {
     flex-direction: column;
     align-items: stretch;
+    top: -16px;
+    margin: 0 -16px 1rem;
+    padding: 10px 16px;
   }
 
   .catalog-toolbar-right {
@@ -1076,5 +1322,20 @@
   .catalog-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 0.75rem;
+  }
+}
+
+/* Small screens: chip rows collapse behind the Filters button full-time */
+@media (max-width: 700px) {
+  .catalog-page > .catalog-tag-filters {
+    display: none;
+  }
+
+  .catalog-filters-btn {
+    display: inline-flex;
+  }
+
+  .catalog-sort-label {
+    display: none;
   }
 }

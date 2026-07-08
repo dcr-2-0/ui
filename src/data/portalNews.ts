@@ -5,7 +5,6 @@
  *  - Add/remove items here.
  *  - `quarter` limits visibility to a specific quarter (e.g. 'Q1-2026').
  *    Omit to show across all quarters.
- *  - `isNew` adds a "NEW" pill to the card.
  *  - `type` controls the accent colour:
  *      promotion  → amber  (bonus points / featured items)
  *      deadline   → red    (time-sensitive actions)
@@ -23,8 +22,6 @@ export interface PortalNewsItem {
   icon: string;
   /** If set, card is only shown while the current quarter matches this value. */
   quarter?: string;
-  /** Show a "NEW" badge on the card. */
-  isNew?: boolean;
   link?: { label: string; navId: string; navLabel: string };
 }
 
@@ -36,7 +33,6 @@ export const portalNews: PortalNewsItem[] = [
     title: 'New Certification: Claude Certified Architect – Foundations',
     body: "Anthropic's CCA-F is now part of the DCR catalog. Launch bonus: the first 10 Develeapers to achieve it by the end of July earn 350 points — after that it settles to its base value of 250. Be an early mover.",
     icon: 'ri-award-line',
-    isNew: true,
     link: { label: 'View certification', navId: 'tech', navLabel: 'Tech' },
   },
 
@@ -48,7 +44,6 @@ export const portalNews: PortalNewsItem[] = [
     body: 'All Google Cloud certifications carry a 10% bonus on top of their base point value this quarter. A great time to go for that Professional Cloud cert.',
     icon: 'ri-google-line',
     quarter: 'Q1-2026',
-    isNew: true,
     link: { label: 'Browse GCP certs', navId: 'tech', navLabel: 'Tech' },
   },
   {
@@ -58,7 +53,6 @@ export const portalNews: PortalNewsItem[] = [
     body: 'The new AWS Certified Generative AI Developer – Professional earns 500 promoted points (base: 400). Early movers gain a significant edge on this emerging skill.',
     icon: 'ri-sparkling-2-line',
     quarter: 'Q1-2026',
-    isNew: true,
     link: { label: 'View certification', navId: 'tech', navLabel: 'Tech' },
   },
 
@@ -122,7 +116,6 @@ export const portalNews: PortalNewsItem[] = [
     title: 'DCR 2.0 Is Live',
     body: 'Plan submission, achievement tracking, team leader approvals, and quarterly history are now fully online. No more spreadsheets — submit your plan directly from the Plan page.',
     icon: 'ri-rocket-line',
-    isNew: true,
     link: { label: 'Go to Plan', navId: 'simulator', navLabel: 'Plan' },
   },
   {

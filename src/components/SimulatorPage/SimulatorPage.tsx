@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { CatalogItem, PlanStatus, CompletionStatus, ProofEntry } from '../../data/types';
 import { levels } from '../../data/levels';
+import PlanStepper from '../PlanStepper/PlanStepper';
 import { professionalism } from '../../data/catalog/professionalism';
 import { ProofPanel } from '../ProofPanel/ProofPanel';
 import './SimulatorPage.css';
@@ -346,6 +347,11 @@ export default function SimulatorPage({
 
   return (
     <div className="simulator-page">
+      {/* ── Quarter lifecycle stepper (shared component) ── */}
+      {isRealPlan && (
+        <PlanStepper planStatus={planStatus} completionStatus={completionStatus} />
+      )}
+
       {/* ── Banners: only for actionable / blocking states ── */}
       {isRealPlan && isPending && (
         <div className="plan-status-banner plan-status-pending">
@@ -441,26 +447,9 @@ export default function SimulatorPage({
                     : 'Add items from the catalog to build your plan'}
                 </p>
               </div>
-              {isRealPlan && isApproved && !isLevelUpApproved && (
-                <span className="plan-status-chip chip-approved">
-                  <i className="ri-checkbox-circle-fill"></i> Plan Approved
-                </span>
-              )}
-              {isRealPlan && isLevelUpApproved && (
-                <span className="plan-status-chip chip-level-up">
-                  <i className="ri-medal-line"></i> Level-Up Approved
-                </span>
-              )}
-              {isRealPlan && (!planStatus || planStatus === 'draft') && (
-                <span className="plan-status-chip chip-draft">
-                  <i className="ri-edit-line"></i> Draft
-                </span>
-              )}
-            </div>
-
-            {/* Level badges / target selector */}
-            {isRealPlan && currentLevel != null ? (
-              <div className="simulator-level-row">
+              {/* Status chips moved to the action rail; level badges live here,
+                  on the title row */}
+              {isRealPlan && currentLevel != null ? (
                 <div className="simulator-level-badge">
                   <span className="simulator-level-badge-current">
                     <i className="ri-user-star-line"></i> Level {currentLevel}
@@ -470,24 +459,24 @@ export default function SimulatorPage({
                     <i className="ri-flag-line"></i> Level {currentLevel + 1}
                   </span>
                 </div>
-              </div>
-            ) : !isRealPlan ? (
-              <div className="simulator-target">
-                <label className="simulator-target-label">Target Level</label>
-                <select
-                  className="simulator-target-select"
-                  value={selectedLevelId}
-                  onChange={(e) => handleSetSelectedLevel(parseInt(e.target.value, 10))}
-                >
-                  <option value={0}>No level selected</option>
-                  {levels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.label} ({level.points} points)
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+              ) : !isRealPlan ? (
+                <div className="simulator-target">
+                  <label className="simulator-target-label">Target Level</label>
+                  <select
+                    className="simulator-target-select"
+                    value={selectedLevelId}
+                    onChange={(e) => handleSetSelectedLevel(parseInt(e.target.value, 10))}
+                  >
+                    <option value={0}>No level selected</option>
+                    {levels.map((level) => (
+                      <option key={level.id} value={level.id}>
+                        {level.label} ({level.points} points)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+            </div>
 
             {/* Stats cards */}
             <div className="simulator-stats-row">
@@ -505,9 +494,10 @@ export default function SimulatorPage({
               )}
             </div>
 
-            {/* Pillar progress bars — vertical */}
+            {/* Pillar progress bars — horizontal, pts pillars share one scale
+                so magnitudes are comparable; requirement = tick on the track */}
             {requirementsStatus && (
-              <div className="simulator-pillars-v">
+              <div className="h-bars">
                 {[
                   {
                     key: 'total',
@@ -559,42 +549,47 @@ export default function SimulatorPage({
                     isMet: requirementsStatus.pillarStatus.collaboration.met,
                     unit: 'pts',
                   },
-                ].map(({ key, label, req, planned, done, fillClass, isMet, unit }) => {
-                  const scale = Math.max(planned, req, 1) * 1.15;
-                  const plannedPct = Math.min(74, (planned / scale) * 100);
-                  const donePct = Math.min(74, (done / scale) * 100);
-                  const reqPct = Math.min(72, (req / scale) * 100);
+                ].map(({ key, label, req, planned, done, fillClass, isMet, unit }, _i, rows) => {
+                  // Tech / Knowledge / Collaboration share one scale so their
+                  // magnitudes are comparable; Total and Professionalism
+                  // (different units) get their own.
+                  const sharedPtsScale =
+                    Math.max(
+                      ...rows
+                        .filter((r) => r.key === 'tech' || r.key === 'knowledge' || r.key === 'collaboration')
+                        .map((r) => Math.max(r.planned, r.req)),
+                      1,
+                    ) * 1.06;
+                  const scale =
+                    key === 'total' || key === 'professionalism'
+                      ? Math.max(planned, req, 1) * 1.06
+                      : sharedPtsScale;
+                  const plannedPct = Math.min(100, (planned / scale) * 100);
+                  const donePct = Math.min(100, (done / scale) * 100);
+                  const reqPct = Math.min(98.5, (req / scale) * 100);
                   const checkMet = completionStats ? done >= req : isMet;
 
                   return (
-                    <div key={key} className="v-bar-col">
-                      <div className="v-bar-name">
-                        {label}
-                        {checkMet && <i className="ri-checkbox-circle-fill v-bar-check" />}
+                    <div key={key} className="h-bar-row">
+                      <div className="h-bar-head">
+                        <span className="h-bar-label">
+                          {label}
+                          {checkMet && <i className="ri-checkbox-circle-fill h-bar-check" />}
+                        </span>
+                        <span className={`h-bar-value${checkMet ? ' met' : ''}`}>
+                          {completionStats ? `${done} done · ` : ''}
+                          {planned.toLocaleString()} {unit} · req {req.toLocaleString()}
+                        </span>
                       </div>
-                      <div className="v-bar-outer">
-                        <div className="v-bar-bg">
-                          {/* Gray area text — planned total, always visible above the fill */}
-                          <div className="v-bar-gray-text" style={{ bottom: `${plannedPct}%` }}>
-                            <span className="v-bar-gray-value">{planned}</span>
-                            <span className="v-bar-gray-sublabel">{unit} planned</span>
-                          </div>
-                          {/* Planned fill from bottom */}
-                          <div className={`v-bar-fill-planned ${fillClass}`} style={{ height: `${plannedPct}%` }} />
-                          {/* Done fill (green, overlaid) */}
-                          {done > 0 && <div className="v-bar-fill-done" style={{ height: `${donePct}%` }} />}
-                          {/* Done amount inside the green fill — completion mode only */}
-                          {completionStats && done > 0 && donePct >= 20 && (
-                            <div className="v-bar-text-overlay" style={{ height: `${donePct}%` }}>
-                              <span className="v-bar-text-value">{done}</span>
-                              <span className="v-bar-text-sublabel">done</span>
-                            </div>
-                          )}
-                        </div>
+                      <div className="h-bar-track">
+                        <div className={`h-bar-fill ${fillClass}`} style={{ width: `${plannedPct}%` }} />
+                        {done > 0 && <div className="h-bar-done" style={{ width: `${donePct}%` }} />}
                         {req > 0 && (
-                          <div className="v-bar-req-line" style={{ bottom: `${reqPct}%` }}>
-                            <span className="v-bar-req-badge">REQ {req} {unit}</span>
-                          </div>
+                          <div
+                            className={`h-bar-tick${checkMet ? ' met' : ''}`}
+                            style={{ left: `${reqPct}%` }}
+                            title={`Required: ${req} ${unit}`}
+                          />
                         )}
                       </div>
                     </div>
@@ -662,11 +657,12 @@ export default function SimulatorPage({
               )}
 
               {(() => {
+                // Icons match the sidebar/catalog pillar icons for consistency
                 const PILLARS: { key: string; label: string; icon: string }[] = [
-                  { key: 'professionalism', label: 'Professionalism', icon: 'ri-briefcase-line' },
-                  { key: 'tech', label: 'Tech', icon: 'ri-code-s-slash-line' },
-                  { key: 'knowledge-unlock', label: 'Knowledge Unlock', icon: 'ri-lightbulb-line' },
-                  { key: 'collaboration', label: 'Collaboration', icon: 'ri-team-line' },
+                  { key: 'professionalism', label: 'Professionalism', icon: 'ri-shield-check-line' },
+                  { key: 'tech', label: 'Tech', icon: 'ri-computer-line' },
+                  { key: 'knowledge-unlock', label: 'Knowledge Unlock', icon: 'ri-edit-line' },
+                  { key: 'collaboration', label: 'Collaboration', icon: 'ri-hearts-line' },
                   { key: 'extra', label: 'Extra', icon: 'ri-star-line' },
                 ];
                 const indexedItems = items.map((item, globalIdx) => ({ item, globalIdx }));
@@ -697,7 +693,15 @@ export default function SimulatorPage({
                               </div>
                               <div className="simulator-item-info">
                                 <h4 className="simulator-item-name">{item.name}</h4>
-                                <p className="simulator-item-meta">{item.promotedPoints ?? item.points} points</p>
+                                <p className="simulator-item-meta">
+                                  {(item.promotedPoints ?? item.points) > 0 && (
+                                    <>{item.promotedPoints ?? item.points} points</>
+                                  )}
+                                  {item.required && (
+                                    <span className="simulator-item-mandatory-tag">Mandatory</span>
+                                  )}
+                                  {!item.required && (item.promotedPoints ?? item.points) === 0 && '0 points'}
+                                </p>
                               </div>
                               {hasProofSupport && (
                                 <button
@@ -758,67 +762,11 @@ export default function SimulatorPage({
             </div>
           )}
 
-          {/* Submit for Approval */}
-          {isRealPlan && onSubmitPlan && !isPending && !isApproved && (
-            <div className="plan-submit-section">
-              <button
-                className="plan-submit-btn"
-                onClick={handleSubmitPlan}
-                disabled={totalItems === 0 || isSubmitting}
-                title={totalItems === 0 ? 'Add items to your plan before submitting' : undefined}
-              >
-                {isSubmitting ? <><div className="spinner-small"></div> Submitting...</>
-                  : isRejected ? <><i className="ri-send-plane-line"></i> Resubmit for Approval</>
-                  : <><i className="ri-send-plane-line"></i> Submit Plan for Approval</>}
-              </button>
-            </div>
-          )}
-
-          {/* Withdraw Approval (moved from sidebar) */}
-          {isApproved && onWithdrawApproval && (
-            <div className="plan-submit-section">
-              <button
-                className="plan-submit-btn plan-withdraw-approval-btn"
-                onClick={async () => {
-                  if (!window.confirm(
-                    'Withdraw the team leader approval?\n\nYour plan will go back to draft and you can edit items again. ' +
-                    'You will need to resubmit for approval before working toward a level-up.\n\nContinue?'
-                  )) return;
-                  setIsSubmitting(true);
-                  try { await onWithdrawApproval(); } finally { setIsSubmitting(false); }
-                }}
-                disabled={isSubmitting}
-              >
-                <i className="ri-arrow-go-back-line"></i> Withdraw Approval
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* ── Sidebar ── */}
+        {/* ── Sidebar (action rail): status → validation → primary action → destructive last ── */}
         <div className="simulator-sidebar">
-          {/* Action buttons */}
-          {(totalItems > 0 && !isPending && !isApproved) || (isRealPlan && isApproved && onSubmitCompletedPlan && !isCompletionPending && !isLevelUpApproved) ? (
-            <div className="simulator-sidebar-actions">
-              {totalItems > 0 && !isPending && !isApproved && (
-                <button className="simulator-clear-btn" onClick={onClearAll}>
-                  <i className="ri-delete-bin-line"></i> Clear All
-                </button>
-              )}
-              {isRealPlan && isApproved && onSubmitCompletedPlan && !isCompletionPending && !isLevelUpApproved && (
-                <button
-                  className="simulator-clear-btn simulator-submit-completion-btn"
-                  onClick={async () => { setIsSubmitting(true); try { await onSubmitCompletedPlan(); } finally { setIsSubmitting(false); } }}
-                  disabled={!completionStats?.met || isSubmitting}
-                  title={!completionStats?.met ? `Requirements not met: ${completionStats?.shortfalls[0] ?? 'Mark more items as completed'}` : undefined}
-                >
-                  {isSubmitting ? <><div className="spinner-small"></div> Sending...</>
-                    : isLevelUpRejected ? <><i className="ri-send-plane-line"></i> Resubmit Completed Plan</>
-                    : <><i className="ri-send-plane-line"></i> Send Completed Plan for Review</>}
-                </button>
-              )}
-            </div>
-          ) : null}
+          {/* Plan status is now conveyed by the lifecycle stepper — no chip needed */}
 
           {/* What's missing / all good */}
           {requirementsStatus && (
@@ -925,6 +873,72 @@ export default function SimulatorPage({
                 </div>
               )}
             </div>
+          )}
+
+          {/* Primary action — submit for approval */}
+          {isRealPlan && onSubmitPlan && !isPending && !isApproved && (
+            <button
+              className="plan-submit-btn rail-submit-btn"
+              onClick={handleSubmitPlan}
+              disabled={totalItems === 0 || isSubmitting}
+              title={totalItems === 0 ? 'Add items to your plan before submitting' : undefined}
+            >
+              {isSubmitting ? <><div className="spinner-small"></div> Submitting...</>
+                : isRejected ? <><i className="ri-send-plane-line"></i> Resubmit for Approval</>
+                : <><i className="ri-send-plane-line"></i> Submit Plan for Approval</>}
+            </button>
+          )}
+
+          {/* Withdraw approval — only during the "Work on plan" phase, never
+              once a level-up review has been submitted (would reset approval +
+              completion progress back to draft). */}
+          {isApproved && !isCompletionLocked && onWithdrawApproval && (
+            <button
+              className="plan-submit-btn plan-withdraw-approval-btn rail-submit-btn"
+              onClick={async () => {
+                if (!window.confirm(
+                  'Withdraw the team leader approval?\n\nYour plan will go back to draft and you can edit items again. ' +
+                  'You will need to resubmit for approval before working toward a level-up.\n\nContinue?'
+                )) return;
+                setIsSubmitting(true);
+                try { await onWithdrawApproval(); } finally { setIsSubmitting(false); }
+              }}
+              disabled={isSubmitting}
+            >
+              <i className="ri-arrow-go-back-line"></i> Withdraw Approval
+            </button>
+          )}
+
+          {/* Completion review submit */}
+          {isRealPlan && isApproved && onSubmitCompletedPlan && !isCompletionPending && !isLevelUpApproved && (
+            <button
+              className="plan-submit-btn rail-submit-btn"
+              onClick={async () => { setIsSubmitting(true); try { await onSubmitCompletedPlan(); } finally { setIsSubmitting(false); } }}
+              disabled={!completionStats?.met || isSubmitting}
+              title={!completionStats?.met ? `Requirements not met: ${completionStats?.shortfalls[0] ?? 'Mark more items as completed'}` : undefined}
+            >
+              {isSubmitting ? <><div className="spinner-small"></div> Sending...</>
+                : isLevelUpRejected ? <><i className="ri-send-plane-line"></i> Resubmit Completed Plan</>
+                : <><i className="ri-send-plane-line"></i> Send Completed Plan for Review</>}
+            </button>
+          )}
+
+          {/* Destructive action — intentionally last and low-key */}
+          {totalItems > 0 && !isPending && !isApproved && (
+            <button
+              className="simulator-clearall-link"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Remove all ${totalItems} item${totalItems !== 1 ? 's' : ''} from your plan?\n\nThis clears your current draft and cannot be undone.`,
+                  )
+                ) {
+                  onClearAll();
+                }
+              }}
+            >
+              <i className="ri-delete-bin-line"></i> Clear all items
+            </button>
           )}
         </div>
 

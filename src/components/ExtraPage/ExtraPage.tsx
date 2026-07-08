@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CatalogItem, CertificationItem } from '../../data/types';
+import GlassSelect from '../GlassSelect/GlassSelect';
 import './ExtraPage.css';
 
 const SIZE_BONUS: Record<string, number> = {
@@ -21,9 +22,11 @@ interface ExtraPageProps {
   onToggleItem: (item: CatalogItem) => void;
   isInCart: (id: string) => boolean;
   certItems: CertificationItem[];
+  /** Current plan items — used to detect an existing circle bonus for a cert */
+  cartItems: CatalogItem[];
 }
 
-export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems }: ExtraPageProps) {
+export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems, cartItems }: ExtraPageProps) {
   // Widget 1: Certification Renewal
   const [renewalCertId, setRenewalCertId] = useState('');
 
@@ -38,16 +41,29 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
 
   const eligibleCerts = certItems.filter(c => c.points >= 130);
   const circleCert = eligibleCerts.find(c => c.id === circleCertId) ?? null;
+  // Promoted certs count with their promoted value (points rule: promotedPoints ?? points)
+  const circleCertPts = circleCert ? (circleCert.promotedPoints ?? circleCert.points) : 0;
   const circleBonus =
     circleCert && groupSize
       ? Math.round(
-          circleCert.points *
+          circleCertPts *
             ((SIZE_BONUS[groupSize] ?? 0) + (RESERVIST_BONUS[reservists] ?? 0))
         )
       : 0;
 
   const renewalItemId = renewalCertId ? `extra-renewal-${renewalCertId}` : '';
   const renewalInCart = renewalItemId ? isInCart(renewalItemId) : false;
+
+  // Deterministic circle-bonus id so the same cert's circle can't be added
+  // twice. The prefix match also catches legacy items created with the old
+  // timestamped ids (extra-circle-<certId>-<timestamp>).
+  const circleItemId = circleCertId ? `extra-circle-${circleCertId}` : '';
+  const existingCircle = circleCertId
+    ? cartItems.find(
+        (i) => i.id === circleItemId || i.id.startsWith(`extra-circle-${circleCertId}-`),
+      )
+    : undefined;
+  const circleInCart = !!existingCircle;
 
   const handleToggleRenewal = () => {
     if (!renewalCert) return;
@@ -62,7 +78,13 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
     });
   };
 
-  const handleAddCircle = () => {
+  const handleToggleCircle = () => {
+    // Already in the plan — toggle removes it (use the found item so legacy
+    // timestamped ids are removed correctly)
+    if (existingCircle) {
+      onToggleItem(existingCircle);
+      return;
+    }
     if (!circleCert || !groupSize || circleBonus <= 0) return;
     if (!isInCart(circleCertId)) {
       onAddItem(circleCert);
@@ -70,7 +92,7 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
     const reservistLabel =
       reservists === '0' ? 'no reservists' : `${reservists} reservist${reservists === '1' ? '' : 's'}`;
     onAddItem({
-      id: `extra-circle-${circleCertId}-${Date.now()}`,
+      id: circleItemId,
       name: `Cert Circle: ${circleCert.name}`,
       points: circleBonus,
       image: circleCert.image,
@@ -94,18 +116,18 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
             Renewing a cert earns 25% of its base points
           </p>
           <div className="extra-widget-body">
-            <select
-              className="extra-select"
+            <GlassSelect
+              className="extra-select-trigger"
               value={renewalCertId}
-              onChange={(e) => setRenewalCertId(e.target.value)}
-            >
-              <option value="">Select certification...</option>
-              {certItems.map((cert) => (
-                <option key={cert.id} value={cert.id}>
-                  {cert.name}
-                </option>
-              ))}
-            </select>
+              onChange={setRenewalCertId}
+              placeholder="Select certification..."
+              searchable
+              options={certItems.map((cert) => ({
+                value: cert.id,
+                label: cert.name,
+                sub: `${cert.points} pts`,
+              }))}
+            />
             {renewalCert && (
               <p className="extra-calc-result">
                 <span className="extra-calc-pts">{renewalPoints}</span>
@@ -135,18 +157,18 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
             Group study bonus — more people means higher bonus points
           </p>
           <div className="extra-widget-body">
-            <select
-              className="extra-select"
+            <GlassSelect
+              className="extra-select-trigger"
               value={circleCertId}
-              onChange={(e) => setCircleCertId(e.target.value)}
-            >
-              <option value="">Select certification (≥130 pts)...</option>
-              {eligibleCerts.map((cert) => (
-                <option key={cert.id} value={cert.id}>
-                  {cert.name}
-                </option>
-              ))}
-            </select>
+              onChange={setCircleCertId}
+              placeholder="Select certification (≥130 pts)..."
+              searchable
+              options={eligibleCerts.map((cert) => ({
+                value: cert.id,
+                label: cert.name,
+                sub: `${cert.promotedPoints ?? cert.points} pts`,
+              }))}
+            />
 
             <div className="extra-toggle-group">
               <span className="extra-toggle-label">Group size</span>
@@ -186,18 +208,18 @@ export default function ExtraPage({ onAddItem, onToggleItem, isInCart, certItems
                 <span className="extra-calc-note">
                   {' '}pts &nbsp;·&nbsp;
                   +{Math.round(((SIZE_BONUS[groupSize] ?? 0) + (RESERVIST_BONUS[reservists] ?? 0)) * 100)}%
-                  {' '}of {circleCert.points}
+                  {' '}of {circleCertPts}
                 </span>
               </p>
             )}
           </div>
           <button
-            className="extra-add-btn"
-            onClick={handleAddCircle}
-            disabled={!circleCert || !groupSize || circleBonus <= 0}
+            className={`extra-add-btn${circleInCart ? ' added' : ''}`}
+            onClick={handleToggleCircle}
+            disabled={!circleInCart && (!circleCert || !groupSize || circleBonus <= 0)}
           >
-            <i className="ri-add-line"></i>
-            Add to Plan
+            <i className={circleInCart ? 'ri-check-line' : 'ri-add-line'}></i>
+            {circleInCart ? 'Added' : 'Add to Plan'}
           </button>
         </div>
 

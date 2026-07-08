@@ -8,6 +8,7 @@ import GuidelinesPage from "../GuidelinesPage/GuidelinesPage";
 import FaqPage from "../FaqPage/FaqPage";
 import CatalogPage from "../CatalogPage/CatalogPage";
 import ExtraPage from "../ExtraPage/ExtraPage";
+import NotificationBell from "../NotificationBell/NotificationBell";
 import SimulatorPage from "../SimulatorPage/SimulatorPage";
 import { TeamLeaderDashboard } from "../TeamLeaderDashboard/TeamLeaderDashboard";
 import ProfilePage from "../ProfilePage/ProfilePage";
@@ -222,10 +223,16 @@ export default function Layout() {
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const toastIdRef = useRef(0);
-  const [isSimulatorMode, setIsSimulatorMode] = useState(() => {
-    const saved = localStorage.getItem("dcr-simulator-mode");
-    return saved ? saved === "true" : true; // Default to simulator mode
-  });
+  // ── SIMULATOR MODE DISABLED (2026-07) ──────────────────────────────────
+  // The portal is real-plan only and requires sign-in. To re-enable the
+  // simulator/real-plan dual mode, restore the stateful version below and
+  // every block marked "SIMULATOR MODE DISABLED" in this file, Sidebar.tsx
+  // and PendingApprovalPage.tsx.
+  const isSimulatorMode = false;
+  // const [isSimulatorMode, setIsSimulatorMode] = useState(() => {
+  //   const saved = localStorage.getItem("dcr-simulator-mode");
+  //   return saved ? saved === "true" : true; // Default to simulator mode
+  // });
   const [showProfileSetup, setShowProfileSetup] = useState(false);
 
   // Unified cart interface - switches between simulator and real plan based on mode
@@ -330,44 +337,45 @@ export default function Layout() {
     showToast("Signed out successfully", "added");
   }, [auth, showToast]);
 
-  const handleToggleMode = useCallback(() => {
-    // If switching to Real Plan, check if profile is set up
-    if (isSimulatorMode && auth.user) {
-      const profile = userProfile.profile;
-      const isUserTeamLeader = profile?.role === "team_leader";
-
-      if (isUserTeamLeader) {
-        // Team leader needs to complete profile setup first
-        if (profile?.approvalStatus !== 'approved') {
-          setShowProfileSetup(true);
-          return;
-        }
-      } else {
-        // Employee: hasn't selected a team leader yet → show setup
-        if (!profile?.teamLeaderId) {
-          setShowProfileSetup(true);
-          return;
-        }
-        // Employee pending approval → switch to real plan and navigate to plan page,
-        // which will render PendingApprovalPage automatically
-        if (profile?.approvalStatus !== "approved") {
-          setIsSimulatorMode(false);
-          setActiveId("simulator");
-          setActiveLabel("My Plan");
-          showToast("Switched to Real Plan mode", "added");
-          return;
-        }
-      }
-    }
-
-    setIsSimulatorMode((prev) => !prev);
-    showToast(
-      !isSimulatorMode
-        ? "Switched to Simulator mode"
-        : "Switched to Real Plan mode",
-      "added",
-    );
-  }, [isSimulatorMode, showToast, auth.user, userProfile.profile]);
+  // SIMULATOR MODE DISABLED — restore this handler to bring the toggle back.
+  // const handleToggleMode = useCallback(() => {
+  //   // If switching to Real Plan, check if profile is set up
+  //   if (isSimulatorMode && auth.user) {
+  //     const profile = userProfile.profile;
+  //     const isUserTeamLeader = profile?.role === "team_leader";
+  //
+  //     if (isUserTeamLeader) {
+  //       // Team leader needs to complete profile setup first
+  //       if (profile?.approvalStatus !== 'approved') {
+  //         setShowProfileSetup(true);
+  //         return;
+  //       }
+  //     } else {
+  //       // Employee: hasn't selected a team leader yet → show setup
+  //       if (!profile?.teamLeaderId) {
+  //         setShowProfileSetup(true);
+  //         return;
+  //       }
+  //       // Employee pending approval → switch to real plan and navigate to plan page,
+  //       // which will render PendingApprovalPage automatically
+  //       if (profile?.approvalStatus !== "approved") {
+  //         setIsSimulatorMode(false);
+  //         setActiveId("simulator");
+  //         setActiveLabel("My Plan");
+  //         showToast("Switched to Real Plan mode", "added");
+  //         return;
+  //       }
+  //     }
+  //   }
+  //
+  //   setIsSimulatorMode((prev) => !prev);
+  //   showToast(
+  //     !isSimulatorMode
+  //       ? "Switched to Simulator mode"
+  //       : "Switched to Real Plan mode",
+  //     "added",
+  //   );
+  // }, [isSimulatorMode, showToast, auth.user, userProfile.profile]);
 
   const handleProfileSetupComplete = useCallback(
     async (data: ProfileSetupData) => {
@@ -440,14 +448,16 @@ export default function Layout() {
 
   const handleProfileSetupCancel = useCallback(() => {
     setShowProfileSetup(false);
-    if (!isTeamLeader) {
-      showToast("Switched back to Simulator mode", "added");
-    }
-  }, [showToast, isTeamLeader]);
-
-  const handleUseSimulator = useCallback(() => {
-    setIsSimulatorMode(true);
+    // SIMULATOR MODE DISABLED — cancelling no longer switches modes.
+    // if (!isTeamLeader) {
+    //   showToast("Switched back to Simulator mode", "added");
+    // }
   }, []);
+
+  // SIMULATOR MODE DISABLED — restore for PendingApprovalPage's simulator button.
+  // const handleUseSimulator = useCallback(() => {
+  //   setIsSimulatorMode(true);
+  // }, []);
 
   // Show auth error toast
   useEffect(() => {
@@ -506,15 +516,36 @@ export default function Layout() {
     roadmaps,
   };
 
-  // Set of approved achieved item IDs — only relevant in real plan mode for approved employees
-  const achievedItemIds =
-    useRealPlan && userProfile.profile?.approvalStatus === "approved"
-      ? new Set(
-          (userProfile.profile?.achieved?.items ?? [])
-            .filter((a) => a.status === "approved")
-            .map((a) => a.itemId),
-        )
-      : null;
+  // Set of approved achieved item IDs — only relevant in real plan mode for
+  // approved employees. Two sources, mirroring the ProfilePage certifications
+  // rule: (1) past-history achievements approved during onboarding, and
+  // (2) items explicitly marked complete during level-up review in approved
+  // plan-history entries. A TL-approved plan alone means intent, not
+  // achievement — completedItemKeys is the source of truth. Read-only
+  // derivation; nothing is written back.
+  const achievedItemIds = (() => {
+    if (!(useRealPlan && userProfile.profile?.approvalStatus === "approved")) {
+      return null;
+    }
+    const ids = new Set(
+      (userProfile.profile?.achieved?.items ?? [])
+        .filter((a) => a.status === "approved")
+        .map((a) => a.itemId),
+    );
+    planHistory
+      .filter((e) => e.status === "approved")
+      .forEach((e) => {
+        e.items.forEach((item, idx) => {
+          const key = item.planItemKey ?? `${item.id}-${idx}`;
+          const done =
+            (e.completedItemKeys?.includes(key) ?? false) ||
+            (e.completedItemKeys?.some((k) => k.startsWith(`${item.id}-`)) ??
+              false);
+          if (done) ids.add(item.id);
+        });
+      });
+    return ids;
+  })();
 
   // All profile-setup achievements (any status) — used for roadmap completion checks
   const pastAchievedIds = new Set(
@@ -608,19 +639,39 @@ export default function Layout() {
     [cart, showToast, autoAddCompletedRoadmaps, autoRemoveDependents],
   );
 
+  // Toast-wrapped add — used by quantity steppers and Extra widgets, which
+  // call the cart directly rather than going through handleToggleItem
+  const handleAddItem = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await cart.addItem(item);
+        showToast(`Added ${item.name}`, "added");
+      } catch (err) {
+        console.error("Failed to add item:", err);
+        showToast("Failed to update cart", "removed");
+      }
+    },
+    [cart, showToast],
+  );
+
   const handleRemoveItem = useCallback(
     async (itemId: string) => {
+      const removedName = cart.items.find((i) => i.id === itemId)?.name;
       const isLastInstance =
         cart.items.filter((i) => i.id === itemId).length === 1;
       if (isLastInstance) {
         await autoRemoveDependents(itemId);
       }
       await cart.removeItem(itemId);
+      if (removedName) {
+        showToast(`Removed ${removedName}`, "removed");
+      }
     },
-    [cart, autoRemoveDependents],
+    [cart, autoRemoveDependents, showToast],
   );
 
-  // Per-item plan status — only relevant in real plan mode; drives purple/amber visual states
+  // Per-item plan status — only relevant in real plan mode; drives the
+  // catalog's locked action state (submitted/approved plans can't be edited)
   const getPlanItemStatus = useRealPlan
     ? (itemId: string): "pending" | "approved" | undefined => {
         if (!cart.isInCart(itemId)) return undefined;
@@ -635,10 +686,10 @@ export default function Layout() {
     localStorage.setItem("dcr-sidebar-collapsed", String(collapsed));
   }, [collapsed]);
 
-  // Persist simulator mode
-  useEffect(() => {
-    localStorage.setItem("dcr-simulator-mode", String(isSimulatorMode));
-  }, [isSimulatorMode]);
+  // SIMULATOR MODE DISABLED — persistence of the mode preference is off.
+  // useEffect(() => {
+  //   localStorage.setItem("dcr-simulator-mode", String(isSimulatorMode));
+  // }, [isSimulatorMode]);
 
   // Auto-add roadmaps when past achievements already satisfy all requirements on first load
   useEffect(() => {
@@ -709,6 +760,39 @@ export default function Layout() {
     profile?.approvalStatus !== "approved" &&
     !!profile?.teamLeaderId;
 
+  // Sign-in is mandatory — the portal has no guest mode. While Firebase
+  // restores the session we show a loader to avoid flashing the gate.
+  if (!auth.user) {
+    return (
+      <div className="app-container signin-gate">
+        {auth.isLoading ? (
+          <div className="signin-loading" aria-label="Loading">
+            <i className="ri-loader-4-line"></i>
+          </div>
+        ) : (
+          <div className="signin-card">
+            <div className="signin-brand">
+              <span className="header-brand-dcr">DCR</span>
+              <span className="header-brand-version">2.0</span>
+            </div>
+            <h1 className="signin-title">Develeap Career Roadmap</h1>
+            <p className="signin-subtitle">
+              Sign in with your Develeap account to continue.
+            </p>
+            <button
+              className="header-sign-in-btn signin-gate-btn"
+              onClick={handleSignIn}
+            >
+              <i className="ri-google-fill"></i>
+              <span>Sign in with Google</span>
+            </button>
+          </div>
+        )}
+        <Toast toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
+
   return (
     <QuarterProvider
       currentQuarter={currentQuarter}
@@ -716,11 +800,107 @@ export default function Layout() {
       activeQuarter={activeQuarter}
       setActiveQuarter={setActiveQuarter}
     >
+    <div className="video-bg" aria-hidden="true">
+      {/* Drop the video file at public/bg-video.mp4 — until it exists this
+          layer stays invisible and the wallpaper shows through. */}
+      <video autoPlay loop muted playsInline>
+        <source src="/bg-video.mp4" type="video/mp4" />
+      </video>
+    </div>
     <div className="app-container">
       <div
         className={`mobile-sidebar-overlay${sidebarOpen ? " active" : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
+      <header className="header">
+        <div className="header-left">
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <i className="ri-menu-line"></i>
+          </button>
+          <div className="menu-circle"></div>
+          <div
+            className="header-brand"
+            onClick={() => handleNavigate("home", "Home")}
+          >
+            <span className="header-brand-dcr">DCR</span>
+            <span className="header-brand-version">2.0</span>
+          </div>
+        </div>
+        <nav className="header-menu">
+          <button
+            className={`menu-link${activeId === "home" ? " is-active" : ""}`}
+            onClick={() => handleNavigate("home", "Home")}
+          >
+            Home
+          </button>
+          <button
+            className={`menu-link${activeId === "my-profile" ? " is-active" : ""}`}
+            onClick={() => handleNavigate("my-profile", "Profile")}
+          >
+            Profile
+          </button>
+          <button
+            className={`menu-link${activeId === "simulator" ? " is-active" : ""}`}
+            onClick={() => handleNavigate("simulator", "Plan")}
+          >
+            {/* Plan totals moved to the sidebar plan card — no badge here */}
+            Plan
+          </button>
+          {(isTeamLeader || isAdmin) && (
+            <button
+              className={`menu-link${activeId === "team-dashboard" ? " is-active" : ""}`}
+              onClick={() =>
+                handleNavigate(
+                  "team-dashboard",
+                  isAdmin ? "Admin Dashboard" : "TL Dashboard",
+                )
+              }
+            >
+              {isAdmin ? "Admin Dashboard" : "TL Dashboard"}
+              {teamMembers.pendingCount + pendingLevelUpsCount > 0 && (
+                <span className="menu-link-badge menu-link-badge--alert">
+                  {teamMembers.pendingCount + pendingLevelUpsCount}
+                </span>
+              )}
+            </button>
+          )}
+        </nav>
+        <button className="search-bar" onClick={() => setPaletteOpen(true)}>
+          <i className="ri-search-line"></i>
+          <span className="search-bar-text">Search</span>
+          <kbd className="search-bar-kbd">⌘K</kbd>
+        </button>
+        <div className="header-actions">
+          {auth.user && (
+            <NotificationBell
+              notifications={notifications.notifications}
+              unreadCount={notifications.unreadCount}
+              markAsRead={notifications.markAsRead}
+              markAllAsRead={notifications.markAllAsRead}
+            />
+          )}
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+          >
+            <i
+              className={theme === "light" ? "ri-moon-line" : "ri-sun-line"}
+            ></i>
+          </button>
+          <HeaderUser
+            user={auth.user}
+            userProfile={userProfile.profile}
+            teamLeaderName={teamLeaderName}
+            onSignIn={handleSignIn}
+            onSignOut={handleSignOut}
+          />
+        </div>
+      </header>
+      <div className="app-wrapper">
       <Sidebar
         activeId={activeId}
         onNavigate={handleNavigate}
@@ -730,52 +910,21 @@ export default function Layout() {
         onToggleCollapse={() => setCollapsed((c) => !c)}
         cartTotalItems={cart.totalItems}
         cartTotalPoints={cart.totalPoints}
+        cartItems={cart.items}
+        currentLevel={userProfile.profile?.currentLevel ?? null}
+        carryOverPoints={carryOverPoints}
+        carriedItems={useRealPlan ? userPlan.carriedItems : undefined}
         user={auth.user}
-        isSimulatorMode={isSimulatorMode}
-        onToggleMode={handleToggleMode}
+        // SIMULATOR MODE DISABLED — restore to bring back the sidebar toggle:
+        // isSimulatorMode={isSimulatorMode}
+        // onToggleMode={handleToggleMode}
         userRole={userProfile.profile?.role}
         pendingTeamCount={teamMembers.pendingCount + pendingLevelUpsCount}
-        unreadNotifications={notifications.unreadCount}
-        onNotificationsClick={() => notifications.markAllAsRead()}
       />
       <main className={mainClasses}>
-        <header className="header">
-          <div className="header-content">
-            <button
-              className="mobile-menu-btn"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <i className="ri-menu-line"></i>
-            </button>
-            <h2 className="category-title">{activeLabel}</h2>
-            <div className="header-actions">
-              <button
-                className="cmd-k-hint"
-                onClick={() => setPaletteOpen(true)}
-              >
-                <i className="ri-search-line"></i>
-                <span className="cmd-k-hint-text">Search</span>
-                <kbd className="cmd-k-hint-kbd">⌘K</kbd>
-              </button>
-              <button
-                className="theme-toggle"
-                onClick={toggleTheme}
-                title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-              >
-                <i
-                  className={theme === "light" ? "ri-moon-line" : "ri-sun-line"}
-                ></i>
-              </button>
-              <HeaderUser
-                user={auth.user}
-                userProfile={userProfile.profile}
-                teamLeaderName={teamLeaderName}
-                onSignIn={handleSignIn}
-                onSignOut={handleSignOut}
-              />
-            </div>
-          </div>
-        </header>
+        <div className="main-header">
+          <h2 className="main-header-title">{activeLabel}</h2>
+        </div>
         <div
           className={`content-area${pageTransition ? " page-transition" : ""}`}
           ref={contentRef}
@@ -791,6 +940,28 @@ export default function Layout() {
               useRealPlan={useRealPlan}
               carryOverPoints={carryOverPoints}
               onNavigate={handleNavigate}
+              onOpenCatalogItem={(item) => {
+                const CATEGORY_NAV: Record<
+                  string,
+                  { id: string; label: string }
+                > = {
+                  tech: { id: "tech", label: "Tech" },
+                  "knowledge-unlock": {
+                    id: "knowledge-unlock",
+                    label: "Knowledge Unlock",
+                  },
+                  collaboration: {
+                    id: "collaboration",
+                    label: "Collaboration",
+                  },
+                };
+                const nav = CATEGORY_NAV[item.category] ?? {
+                  id: "tech",
+                  label: "Tech",
+                };
+                handleNavigate(nav.id, nav.label);
+                setFocusCatalogItemId(item.id);
+              }}
             />
           )}
           {activeId === "guidelines" && (
@@ -812,15 +983,18 @@ export default function Layout() {
                 teamLeaderId={profile!.teamLeaderId!}
                 requestDate={profile!.createdAt}
                 onChangeTeamLeader={() => setShowProfileSetup(true)}
-                onUseSimulator={handleUseSimulator}
+                // SIMULATOR MODE DISABLED:
+                // onUseSimulator={handleUseSimulator}
               />
             ) : (
               <CatalogPage
+                key={activeId}
+                pageKey={activeId}
                 items={catalogData[activeId]}
                 onToggleItem={handleToggleItem}
                 isInCart={cart.isInCart}
                 getQuantity={cart.getQuantity}
-                onAddItem={cart.addItem}
+                onAddItem={handleAddItem}
                 onRemoveItem={handleRemoveItem}
                 isAchieved={activeId === "tech" ? isAchieved : undefined}
                 getPlanItemStatus={getPlanItemStatus}
@@ -853,7 +1027,17 @@ export default function Layout() {
                         }
                       : undefined
                 }
-                authUser={auth.user}
+                authUser={
+                  // Same avatar fallback chain as ProfilePage: the Firestore
+                  // profile photo wins over the Google auth photo
+                  auth.user
+                    ? {
+                        ...auth.user,
+                        photoURL:
+                          userProfile.profile?.photoURL ?? auth.user.photoURL,
+                      }
+                    : null
+                }
               />
             ))}
           {activeId === "simulator" &&
@@ -862,7 +1046,8 @@ export default function Layout() {
                 teamLeaderId={profile!.teamLeaderId!}
                 requestDate={profile!.createdAt}
                 onChangeTeamLeader={() => setShowProfileSetup(true)}
-                onUseSimulator={handleUseSimulator}
+                // SIMULATOR MODE DISABLED:
+                // onUseSimulator={handleUseSimulator}
               />
             ) : (
               <SimulatorPage
@@ -1028,6 +1213,10 @@ export default function Layout() {
               planCarryOverPoints={useRealPlan ? carryOverPoints : undefined}
               planCarryOverLabel={useRealPlan ? carryOverLabel : undefined}
               onNavigate={setActiveId}
+              onOpenCatalogItem={(item) => {
+                handleNavigate("tech", "Tech");
+                setFocusCatalogItemId(item.id);
+              }}
             />
           )}
           {activeId === "team-dashboard" &&
@@ -1042,14 +1231,16 @@ export default function Layout() {
             )}
           {activeId === "extra" && (
             <ExtraPage
-              onAddItem={cart.addItem}
+              onAddItem={handleAddItem}
               onToggleItem={handleToggleItem}
               isInCart={cart.isInCart}
               certItems={tech}
+              cartItems={cart.items}
             />
           )}
         </div>
       </main>
+      </div>
       <CommandPalette
         isOpen={paletteOpen}
         onClose={() => setPaletteOpen(false)}

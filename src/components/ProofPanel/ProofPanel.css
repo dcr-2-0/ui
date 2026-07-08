@@ -1,5 +1,5 @@
 .proof-panel {
-  background: var(--glass-elevated);
+  background: var(--glass-surface);
   border: 1px solid var(--glass-border);
   border-top: none;
   border-radius: 0 0 12px 12px;

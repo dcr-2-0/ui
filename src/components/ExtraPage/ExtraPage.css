@@ -7,16 +7,14 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* ============ Widget Card ============ */
 .extra-widget {
-  background: var(--glass-elevated);
-  backdrop-filter: var(--blur-light);
-  -webkit-backdrop-filter: var(--blur-light);
+  background: var(--glass-surface);
   border: 1px solid var(--glass-border-light);
-  border-radius: 1rem;
+  border-radius: 14px;
   padding: 1.75rem 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -234,6 +232,7 @@
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
+  margin-top: auto; /* pin to card bottom so equal-height cards align */
   padding: 0.625rem 1rem;
   border: none;
   border-radius: 0.625rem;
@@ -253,14 +252,25 @@
   transform: translateY(-1px);
 }
 
+/* In plan — soft blue, consistent with the catalog's "In plan" state;
+   green is reserved for Achieved. Inset ring so the button doesn't grow. */
 .extra-add-btn.added {
-  background: var(--success-color);
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .extra-add-btn.added {
+  background: rgba(147, 197, 253, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.35);
+  color: #93c5fd;
 }
 
 .extra-add-btn.added:hover {
   background: var(--error-color);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   transform: translateY(-1px);
+  color: #fff;
 }
 
 .extra-add-btn:disabled {
@@ -283,4 +293,9 @@
   .extra-widgets-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* GlassSelect trigger inside extra widgets — full width like the old select */
+.extra-select-trigger {
+  width: 100%;
 }

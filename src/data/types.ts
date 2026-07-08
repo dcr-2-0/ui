@@ -27,7 +27,7 @@ export interface CertificationItem extends CatalogItem {
   examUrl?: string;
   price?: number;           // USD
   duration?: string;        // e.g. '90 min', '2 hours'
-  questions?: number;       // number of exam questions
+  questions?: number | string; // number of exam questions (or a range like '40–60')
   questionType?: string;    // e.g. 'Multiple choice', 'Performance-based', 'Multiple choice + Labs'
   passingScore?: string;    // e.g. '700/1000', '70%'
   proctored?: boolean;      // whether the exam requires a live proctor
@@ -146,6 +146,10 @@ export interface PlanHistoryEntry {
   rejectionReason?: string;
   levelAchieved?: number;    // set when approved and user leveled up
   completedItemKeys?: string[]; // keys of items marked done during completion review
+  /** Banked points (pre-portal + previous level-up surplus) that counted toward
+   *  the threshold this quarter. Display-only — NOT part of totalPoints, which
+   *  must stay items-only for the carryover-bank computation. */
+  carryOverPoints?: number;
 }
 
 export interface LevelHistoryEntry {
@@ -205,6 +209,9 @@ export interface LevelUpRequest {
   completedItemKeys: string[];
   planItems: CatalogItem[];   // snapshot of plan at submission
   proofEntries?: Record<string, ProofEntry[]>;  // snapshot of proofs at submission
+  /** Banked points (pre-portal + previous level-up surplus) counted toward the
+   *  target level — lets the admin see how the threshold is actually met. */
+  carryOverPoints?: number;
   status: 'pending' | 'approved' | 'rejected';
   requestedAt: string;        // when TL recommended
   resolvedAt?: string;        // when admin decided
@@ -216,7 +223,15 @@ export interface LevelUpRequest {
 // Notification Types
 // ==========================================
 
-export type NotificationType = 'level_up_approved' | 'level_up_rejected' | 'level_up_recommended';
+export type NotificationType =
+  | 'level_up_approved'
+  | 'level_up_rejected'
+  | 'level_up_recommended'   // employee (TL sent it onward) + admins (action needed)
+  | 'plan_submitted'         // → TL: member submitted a quarterly plan
+  | 'plan_approved'          // → employee
+  | 'plan_rejected'          // → employee (with reason)
+  | 'completion_submitted'   // → TL: member submitted a completed plan
+  | 'registration_approved'; // → employee: initial registration approved
 
 export interface AppNotification {
   id: string;
@@ -232,6 +247,7 @@ export interface AppNotification {
     quarter?: string;
     employeeName?: string;
     requestId?: string;
+    reason?: string;
   };
 }
 

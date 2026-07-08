@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
-import { useAchievements } from '../../hooks/useAchievements';
 import { useCurrentQuarter, useQuarterConfig } from '../../contexts/QuarterContext';
-import { professionalism } from '../../data/catalog/professionalism';
 import { tech } from '../../data/catalog/tech';
 import { knowledge } from '../../data/catalog/knowledge';
 import { collaboration } from '../../data/catalog/collaboration';
-import { levels, MANDATORY_ITEM_IDS } from '../../data/levels';
 import { portalNews } from '../../data/portalNews';
-import type { UserDocument, CatalogItem, PlanStatus, Achievement } from '../../data/types';
+import type { UserDocument, CatalogItem, PlanStatus } from '../../data/types';
 import './HomePage.css';
 
 interface AuthUser {
@@ -27,6 +24,8 @@ interface HomePageProps {
   useRealPlan: boolean;
   carryOverPoints: number;
   onNavigate: (id: string, label: string) => void;
+  /** Deep-link: navigate to the item's catalog page and open its detail modal */
+  onOpenCatalogItem?: (item: CatalogItem) => void;
 }
 
 // ── Module-level constants ────────────────────────────────────────────────────
@@ -36,8 +35,6 @@ const ALL_PROMOTED = [
   ...knowledge.filter((i) => i.promoted),
   ...collaboration.filter((i) => i.promoted),
 ];
-
-const PILLAR_REQS = { tech: 50, 'knowledge-unlock': 20, collaboration: 30 } as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -56,6 +53,19 @@ function getDaysRemainingInQuarter(quarter: string): number {
   return Math.max(0, Math.ceil((end.getTime() - new Date().getTime()) / 86400000));
 }
 
+/** "Jul 1 — Sep 30" plus the quarter's total day count (for the progress ring) */
+function getQuarterRange(quarter: string): { label: string; totalDays: number } {
+  const parts = quarter.split('-');
+  const q = parseInt(parts[0].slice(1));
+  const year = parseInt(parts[1]);
+  const start = new Date(year, (q - 1) * 3, 1);
+  const end = new Date(year, q * 3, 0);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  return { label: `${fmt(start)} — ${fmt(end)}`, totalDays };
+}
+
 function getGreeting(name: string | null | undefined): string {
   const hour = new Date().getHours();
   const first = name?.split(' ')[0] ?? 'there';
@@ -64,35 +74,15 @@ function getGreeting(name: string | null | undefined): string {
   return `Good evening, ${first}`;
 }
 
-function fmtDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch {
-    return '';
-  }
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
-
-const PILLAR_CFG: Record<string, { icon: string; color: string }> = {
-  tech: { icon: 'ri-computer-line', color: 'var(--accent-color)' },
-  professionalism: { icon: 'ri-shield-check-line', color: 'var(--success-color)' },
-  'knowledge-unlock': { icon: 'ri-edit-line', color: '#8b5cf6' },
-  collaboration: { icon: 'ri-hearts-line', color: '#ec4899' },
-  roadmaps: { icon: 'ri-route-line', color: 'var(--warning-color)' },
-};
 
 export default function HomePage({
   user,
   profile,
   cartItems,
-  cartTotalPoints,
-  planStatus,
-  isSimulatorMode,
-  useRealPlan,
   onNavigate,
+  onOpenCatalogItem,
 }: HomePageProps) {
-  const { achievements, isLoading: achLoading } = useAchievements(user?.email ?? null);
   const currentQuarter = useCurrentQuarter();
   const { isFrozen } = useQuarterConfig();
 
@@ -102,87 +92,80 @@ export default function HomePage({
     [currentQuarter]
   );
   const daysRemaining = getDaysRemainingInQuarter(currentQuarter);
+  const quarterRange = getQuarterRange(currentQuarter);
   const currentLevel = profile?.currentLevel ?? null;
-  const nextLevelDef = currentLevel != null ? levels.find((l) => l.id === currentLevel + 1) : levels[0];
 
   // ── Cart breakdown ────────────────────────────────────────────────────────
 
   const cartItemIds = useMemo(() => new Set(cartItems.map((i) => i.id)), [cartItems]);
 
-  const cartPointsByCategory = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const item of cartItems) {
-      const pts = item.promotedPoints ?? item.points;
-      map[item.category] = (map[item.category] ?? 0) + pts;
-    }
-    return map;
-  }, [cartItems]);
+  // ── News card renderer (used by both columns of Program Updates) ──────────
 
-  const cartByCategory = useMemo(() => {
-    const map: Record<string, CatalogItem[]> = {};
-    for (const item of cartItems) {
-      if (!map[item.category]) map[item.category] = [];
-      map[item.category].push(item);
-    }
-    return map;
-  }, [cartItems]);
-
-  const requiredInCart = useMemo(
-    () => MANDATORY_ITEM_IDS.filter((id) => cartItemIds.has(id)),
-    [cartItemIds]
-  );
-
-  // ── Points / level bank ───────────────────────────────────────────────────
-
-  const totalApprovedPoints = useMemo(() => {
-    const histPts = (profile?.achieved?.items ?? [])
-      .filter((a) => a.status === 'approved')
-      .reduce((s, a) => s + (a.item.promotedPoints ?? a.item.points), 0);
-    const qPts = achievements
-      .filter((a: Achievement) => a.status === 'approved')
-      .reduce((s: number, a: Achievement) => s + (a.item.promotedPoints ?? a.item.points), 0);
-    return histPts + qPts + (profile?.preSystemPoints ?? 0);
-  }, [profile?.achieved?.items, profile?.preSystemPoints, achievements]);
-
-  const consumedPoints = useMemo(() => {
-    if (currentLevel == null) return 0;
-    return levels.filter((l) => l.id <= currentLevel).reduce((s, l) => s + l.points, 0);
-  }, [currentLevel]);
-
-  const bankedPoints = Math.max(0, totalApprovedPoints - consumedPoints);
-  const progressToNext = nextLevelDef
-    ? Math.min(100, Math.round((bankedPoints / nextLevelDef.points) * 100))
-    : currentLevel === 10
-    ? 100
-    : 0;
-
-  // ── Recent achievements ───────────────────────────────────────────────────
-
-  const recentAchievements = useMemo(() => {
-    const hist = (profile?.achieved?.items ?? []).map((a, i) => ({
-      key: `h-${a.itemId}-${i}`,
-      item: a.item,
-      status: a.status as string,
-      date: a.completionDate,
-      quarter: null as string | null,
-    }));
-    const qAch = achievements.map((a: Achievement) => ({
-      key: a.id,
-      item: a.item,
-      status: a.status as string,
-      date: a.completionDate,
-      quarter: a.quarter ?? null,
-    }));
-    return [...qAch, ...hist]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 4);
-  }, [profile?.achieved?.items, achievements]);
-
-  // ── Pillar points ─────────────────────────────────────────────────────────
-
-  const techPts = cartPointsByCategory['tech'] ?? 0;
-  const knowledgePts = cartPointsByCategory['knowledge-unlock'] ?? 0;
-  const collabPts = cartPointsByCategory['collaboration'] ?? 0;
+  const renderNewsCard = (
+    item: (typeof activeNews)[number],
+    large = false,
+  ) => {
+    const COLOR: Record<string, string> = {
+      promotion: 'var(--warning-color)',
+      deadline: 'var(--error-color)',
+      reminder: 'var(--accent-color)',
+      announcement: '#8b5cf6',
+    };
+    const BG: Record<string, string> = {
+      promotion: 'rgba(245,158,11,0.08)',
+      deadline: 'rgba(239,68,68,0.06)',
+      reminder: 'rgba(59,130,246,0.06)',
+      announcement: 'rgba(139,92,246,0.06)',
+    };
+    const BORDER: Record<string, string> = {
+      promotion: 'rgba(245,158,11,0.18)',
+      deadline: 'rgba(239,68,68,0.15)',
+      reminder: 'rgba(59,130,246,0.13)',
+      announcement: 'rgba(139,92,246,0.15)',
+    };
+    const color = COLOR[item.type];
+    return (
+      <div
+        key={item.id}
+        className={`home-news-card${large ? ' home-news-card--lg' : ''}`}
+        style={{
+          background: BG[item.type],
+          borderColor: BORDER[item.type],
+        }}
+      >
+        <div className="home-news-card-top">
+          <div
+            className="home-news-icon"
+            style={{ background: `${color}18`, color }}
+          >
+            <i className={item.icon}></i>
+          </div>
+          <div className="home-news-badges">
+            <span
+              className="home-news-type-badge"
+              style={{ background: `${color}14`, color, borderColor: `${color}25` }}
+            >
+              {item.type === 'promotion' && 'Promotion'}
+              {item.type === 'deadline' && 'Deadline'}
+              {item.type === 'reminder' && 'Reminder'}
+              {item.type === 'announcement' && 'New'}
+            </span>
+          </div>
+        </div>
+        <h3 className="home-news-title">{item.title}</h3>
+        <p className="home-news-body">{item.body}</p>
+        {item.link && (
+          <button
+            className="home-news-link"
+            style={{ color }}
+            onClick={() => onNavigate(item.link!.navId, item.link!.navLabel)}
+          >
+            {item.link.label} <i className="ri-arrow-right-line"></i>
+          </button>
+        )}
+      </div>
+    );
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -190,34 +173,6 @@ export default function HomePage({
   const approvalStatus = profile?.approvalStatus;
   const displayName = profile?.displayName ?? user?.displayName;
   const photoURL = profile?.photoURL ?? user?.photoURL;
-
-  const planStatusColor =
-    planStatus === 'approved'
-      ? 'var(--success-color)'
-      : planStatus === 'rejected'
-      ? 'var(--error-color)'
-      : planStatus === 'pending'
-      ? 'var(--warning-color)'
-      : 'var(--text-muted)';
-
-  const planStatusIcon =
-    planStatus === 'approved'
-      ? 'ri-checkbox-circle-line'
-      : planStatus === 'rejected'
-      ? 'ri-close-circle-line'
-      : planStatus === 'pending'
-      ? 'ri-time-line'
-      : 'ri-file-edit-line';
-
-  const planStatusLabel = useRealPlan
-    ? planStatus === 'approved'
-      ? 'Approved'
-      : planStatus === 'rejected'
-      ? 'Rejected'
-      : planStatus === 'pending'
-      ? 'Under Review'
-      : 'Draft'
-    : 'Simulator';
 
   return (
     <div className="home-page">
@@ -255,9 +210,9 @@ export default function HomePage({
                   <i className="ri-shield-star-line"></i> Admin
                 </span>
               )}
-              {approvalStatus === 'approved' && (
-                <span className="home-tag home-tag-approved">
-                  <i className="ri-checkbox-circle-line"></i> Active
+              {role === 'employee' && profile?.teamLeaderName && (
+                <span className="home-tag home-tag-tl">
+                  <i className="ri-user-star-line"></i> TL: {profile.teamLeaderName}
                 </span>
               )}
               {approvalStatus === 'pending' && (
@@ -272,93 +227,37 @@ export default function HomePage({
           <div className="home-hero-quarter-box">
             <span className="home-hero-quarter-label">Current Quarter</span>
             <span className="home-hero-quarter-value">{currentQuarter}</span>
-            {isFrozen ? (
-              <span className="home-hero-days-left">
-                <i className="ri-lock-line"></i> Quarter locked
-              </span>
-            ) : (
-              <span className="home-hero-days-left">
-                <i className="ri-time-line"></i> {daysRemaining}d remaining
-              </span>
-            )}
+            <span className="home-hero-quarter-range">{quarterRange.label}</span>
           </div>
-          <span className={`home-mode-badge ${isSimulatorMode ? 'sim' : 'real'}`}>
-            <i className={isSimulatorMode ? 'ri-flask-line' : 'ri-record-circle-line'}></i>
-            {isSimulatorMode ? 'Simulator' : 'Real Plan'}
-          </span>
-        </div>
-      </div>
-
-      {/* ── Top Stats Row ── */}
-      <div className="home-stats-row">
-        {/* Plan points */}
-        <div className="home-stat-card" onClick={() => onNavigate('simulator', 'Plan')}>
-          <div className="home-stat-icon-wrap" style={{ background: 'rgba(59,130,246,0.12)' }}>
-            <i className="ri-shopping-cart-2-line" style={{ color: 'var(--accent-color)' }}></i>
-          </div>
-          <div className="home-stat-body">
-            <span className="home-stat-value">{cartTotalPoints.toLocaleString()}</span>
-            <span className="home-stat-label">Points in plan</span>
-            <span className="home-stat-sub">
-              {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} added
-            </span>
-          </div>
-          <i className="home-stat-chevron ri-arrow-right-s-line"></i>
-        </div>
-
-        {/* Level progress */}
-        <div className="home-stat-card" onClick={() => onNavigate('my-profile', 'My Profile')}>
-          <div className="home-stat-icon-wrap" style={{ background: 'rgba(16,185,129,0.12)' }}>
-            <i className="ri-bar-chart-2-line" style={{ color: 'var(--success-color)' }}></i>
-          </div>
-          <div className="home-stat-body">
-            <span className="home-stat-value">
-              {currentLevel != null ? `Level ${currentLevel}` : '—'}
-            </span>
-            <span className="home-stat-label">Current level</span>
-            <span className="home-stat-sub">
-              {nextLevelDef
-                ? `${bankedPoints.toLocaleString()} / ${nextLevelDef.points.toLocaleString()} pts → L${nextLevelDef.id}`
-                : currentLevel === 10
-                ? 'Maximum level reached!'
-                : user
-                ? 'Set up profile to track'
-                : 'Sign in to track'}
-            </span>
-          </div>
-          {nextLevelDef && (
-            <div className="home-stat-progress-bar">
-              <div
-                className="home-stat-progress-fill"
-                style={{ width: `${progressToNext}%` }}
+          <div className="home-hero-days-ring" aria-label={`${daysRemaining} days left in the quarter`}>
+            <svg viewBox="0 0 72 72">
+              <circle className="home-hero-ring-track" cx="36" cy="36" r="31" />
+              <circle
+                className="home-hero-ring-fill"
+                cx="36"
+                cy="36"
+                r="31"
+                strokeDasharray={2 * Math.PI * 31}
+                strokeDashoffset={
+                  2 * Math.PI * 31 *
+                  (1 - Math.max(0, Math.min(1, daysRemaining / quarterRange.totalDays)))
+                }
               />
+            </svg>
+            <div className="home-hero-days-ring-text">
+              {isFrozen ? (
+                <>
+                  <i className="ri-lock-line home-hero-ring-lock"></i>
+                  <span className="home-hero-ring-label">locked</span>
+                </>
+              ) : (
+                <>
+                  <span className="home-hero-ring-num">{daysRemaining}</span>
+                  <span className="home-hero-ring-label">days left</span>
+                </>
+              )}
             </div>
-          )}
-          <i className="home-stat-chevron ri-arrow-right-s-line"></i>
-        </div>
-
-        {/* Plan status */}
-        <div className="home-stat-card" onClick={() => onNavigate('simulator', 'Plan')}>
-          <div
-            className="home-stat-icon-wrap"
-            style={{
-              background: planStatus
-                ? `${planStatusColor}1a`
-                : 'rgba(100,116,139,0.12)',
-            }}
-          >
-            <i className={planStatusIcon} style={{ color: planStatusColor }}></i>
           </div>
-          <div className="home-stat-body">
-            <span className="home-stat-value" style={{ color: planStatus ? planStatusColor : undefined }}>
-              {planStatusLabel}
-            </span>
-            <span className="home-stat-label">Plan status</span>
-            <span className="home-stat-sub">
-              {useRealPlan ? currentQuarter : 'Switch to Real Plan to submit'}
-            </span>
-          </div>
-          <i className="home-stat-chevron ri-arrow-right-s-line"></i>
         </div>
       </div>
 
@@ -370,272 +269,24 @@ export default function HomePage({
               <i className="ri-megaphone-line"></i>
               Program Updates
             </h2>
-            <button
-              className="home-card-link-btn"
-              onClick={() => onNavigate('guidelines', 'Guidelines')}
-            >
-              Full guidelines <i className="ri-arrow-right-line"></i>
-            </button>
           </div>
-          <div className="home-news-scroll">
-            {activeNews.map((item) => {
-              const COLOR: Record<string, string> = {
-                promotion: 'var(--warning-color)',
-                deadline: 'var(--error-color)',
-                reminder: 'var(--accent-color)',
-                announcement: '#8b5cf6',
-              };
-              const BG: Record<string, string> = {
-                promotion: 'rgba(245,158,11,0.08)',
-                deadline: 'rgba(239,68,68,0.06)',
-                reminder: 'rgba(59,130,246,0.06)',
-                announcement: 'rgba(139,92,246,0.06)',
-              };
-              const BORDER: Record<string, string> = {
-                promotion: 'rgba(245,158,11,0.18)',
-                deadline: 'rgba(239,68,68,0.15)',
-                reminder: 'rgba(59,130,246,0.13)',
-                announcement: 'rgba(139,92,246,0.15)',
-              };
-              const color = COLOR[item.type];
-              return (
-                <div
-                  key={item.id}
-                  className="home-news-card"
-                  style={{
-                    background: BG[item.type],
-                    borderColor: BORDER[item.type],
-                  }}
-                >
-                  <div className="home-news-card-top">
-                    <div
-                      className="home-news-icon"
-                      style={{ background: `${color}18`, color }}
-                    >
-                      <i className={item.icon}></i>
-                    </div>
-                    <div className="home-news-badges">
-                      <span
-                        className="home-news-type-badge"
-                        style={{ background: `${color}14`, color, borderColor: `${color}25` }}
-                      >
-                        {item.type === 'promotion' && 'Promotion'}
-                        {item.type === 'deadline' && 'Deadline'}
-                        {item.type === 'reminder' && 'Reminder'}
-                        {item.type === 'announcement' && "What's New"}
-                      </span>
-                      {item.isNew && (
-                        <span className="home-news-new-badge">NEW</span>
-                      )}
-                    </div>
-                  </div>
-                  <h3 className="home-news-title">{item.title}</h3>
-                  <p className="home-news-body">{item.body}</p>
-                  {item.link && (
-                    <button
-                      className="home-news-link"
-                      style={{ color }}
-                      onClick={() => onNavigate(item.link!.navId, item.link!.navLabel)}
-                    >
-                      {item.link.label} <i className="ri-arrow-right-line"></i>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Pillars Section ── */}
-      {user && (
-        <div className="home-section">
-          <h2 className="home-section-title">
-            <i className="ri-layout-4-line"></i>
-            Pillars This Quarter
-          </h2>
-          <div className="home-pillars-grid">
-
-            {/* Professionalism */}
-            <div
-              className="home-pillar-card"
-              onClick={() => onNavigate('professionalism', 'Professionalism')}
-            >
-              <div className="home-pillar-top">
-                <div className="home-pillar-icon" style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--success-color)' }}>
-                  <i className="ri-shield-check-line"></i>
-                </div>
-                <div className="home-pillar-meta">
-                  <span className="home-pillar-name">Professionalism</span>
-                  <span className="home-pillar-sub">Required items</span>
-                </div>
-                <span
-                  className={`home-pillar-badge ${
-                    requiredInCart.length === MANDATORY_ITEM_IDS.length
-                      ? 'done'
-                      : requiredInCart.length > 0
-                      ? 'partial'
-                      : 'missing'
-                  }`}
-                >
-                  {requiredInCart.length}/{MANDATORY_ITEM_IDS.length}
-                </span>
-              </div>
-              <div className="home-pillar-checklist">
-                {professionalism
-                  .filter((i) => MANDATORY_ITEM_IDS.includes(i.id))
-                  .map((item) => (
-                    <div
-                      key={item.id}
-                      className={`home-pillar-check-row ${cartItemIds.has(item.id) ? 'checked' : ''}`}
-                    >
-                      <i
-                        className={
-                          cartItemIds.has(item.id)
-                            ? 'ri-checkbox-circle-fill'
-                            : 'ri-checkbox-blank-circle-line'
-                        }
-                      ></i>
-                      <span>{item.name}</span>
-                    </div>
-                  ))}
-              </div>
+          <div
+            className={`home-news-layout${
+              activeNews.length <= 2 ? ' home-news-layout--single' : ''
+            }`}
+          >
+            {/* Two latest updates — featured column */}
+            <div className="home-news-primary">
+              {activeNews.slice(0, 2).map((item) => renderNewsCard(item, true))}
             </div>
-
-            {/* Tech */}
-            <div
-              className="home-pillar-card"
-              onClick={() => onNavigate('tech', 'Tech')}
-            >
-              <div className="home-pillar-top">
-                <div className="home-pillar-icon" style={{ background: 'rgba(59,130,246,0.12)', color: 'var(--accent-color)' }}>
-                  <i className="ri-computer-line"></i>
+            {/* Remaining updates — scrollable side column */}
+            {activeNews.length > 2 && (
+              <div className="home-news-side">
+                <div className="home-news-side-scroll">
+                  {activeNews.slice(2).map((item) => renderNewsCard(item))}
                 </div>
-                <div className="home-pillar-meta">
-                  <span className="home-pillar-name">Tech</span>
-                  <span className="home-pillar-sub">Min. {PILLAR_REQS.tech} pts</span>
-                </div>
-                <span
-                  className={`home-pillar-badge ${
-                    techPts >= PILLAR_REQS.tech ? 'done' : techPts > 0 ? 'partial' : 'missing'
-                  }`}
-                >
-                  {techPts} pts
-                </span>
               </div>
-              <div className="home-pillar-bar-row">
-                <div className="home-pillar-bar">
-                  <div
-                    className={`home-pillar-bar-fill ${techPts >= PILLAR_REQS.tech ? 'done' : 'tech'}`}
-                    style={{ width: `${Math.min(100, (techPts / PILLAR_REQS.tech) * 100)}%` }}
-                  />
-                </div>
-                <span className="home-pillar-bar-label">
-                  {techPts >= PILLAR_REQS.tech
-                    ? `Min. met ✓`
-                    : `${PILLAR_REQS.tech - techPts} more pts needed`}
-                </span>
-              </div>
-              {(cartByCategory['tech']?.length ?? 0) > 0 && (
-                <div className="home-pillar-chips">
-                  {(cartByCategory['tech'] ?? []).slice(0, 3).map((item) => (
-                    <span key={item.id} className="home-pillar-chip">
-                      {item.image && <img src={item.image} alt="" />}
-                      {item.name.replace(/^(AWS|GCP|HashiCorp|Kubernetes)\s+Certified\s*/i, '').slice(0, 24)}
-                    </span>
-                  ))}
-                  {(cartByCategory['tech']?.length ?? 0) > 3 && (
-                    <span className="home-pillar-chip home-pillar-chip-more">
-                      +{(cartByCategory['tech']?.length ?? 0) - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Knowledge Unlock */}
-            <div
-              className="home-pillar-card"
-              onClick={() => onNavigate('knowledge-unlock', 'Knowledge Unlock')}
-            >
-              <div className="home-pillar-top">
-                <div className="home-pillar-icon" style={{ background: 'rgba(139,92,246,0.12)', color: '#8b5cf6' }}>
-                  <i className="ri-edit-line"></i>
-                </div>
-                <div className="home-pillar-meta">
-                  <span className="home-pillar-name">Knowledge Unlock</span>
-                  <span className="home-pillar-sub">Min. {PILLAR_REQS['knowledge-unlock']} pts</span>
-                </div>
-                <span
-                  className={`home-pillar-badge ${
-                    knowledgePts >= PILLAR_REQS['knowledge-unlock']
-                      ? 'done'
-                      : knowledgePts > 0
-                      ? 'partial'
-                      : 'missing'
-                  }`}
-                >
-                  {knowledgePts} pts
-                </span>
-              </div>
-              <div className="home-pillar-bar-row">
-                <div className="home-pillar-bar">
-                  <div
-                    className={`home-pillar-bar-fill ${knowledgePts >= PILLAR_REQS['knowledge-unlock'] ? 'done' : 'knowledge'}`}
-                    style={{
-                      width: `${Math.min(100, (knowledgePts / PILLAR_REQS['knowledge-unlock']) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <span className="home-pillar-bar-label">
-                  {knowledgePts >= PILLAR_REQS['knowledge-unlock']
-                    ? 'Min. met ✓'
-                    : `${PILLAR_REQS['knowledge-unlock'] - knowledgePts} more pts needed`}
-                </span>
-              </div>
-            </div>
-
-            {/* Collaboration */}
-            <div
-              className="home-pillar-card"
-              onClick={() => onNavigate('collaboration', 'Collaboration')}
-            >
-              <div className="home-pillar-top">
-                <div className="home-pillar-icon" style={{ background: 'rgba(236,72,153,0.12)', color: '#ec4899' }}>
-                  <i className="ri-hearts-line"></i>
-                </div>
-                <div className="home-pillar-meta">
-                  <span className="home-pillar-name">Collaboration</span>
-                  <span className="home-pillar-sub">Min. {PILLAR_REQS.collaboration} pts</span>
-                </div>
-                <span
-                  className={`home-pillar-badge ${
-                    collabPts >= PILLAR_REQS.collaboration
-                      ? 'done'
-                      : collabPts > 0
-                      ? 'partial'
-                      : 'missing'
-                  }`}
-                >
-                  {collabPts} pts
-                </span>
-              </div>
-              <div className="home-pillar-bar-row">
-                <div className="home-pillar-bar">
-                  <div
-                    className={`home-pillar-bar-fill ${collabPts >= PILLAR_REQS.collaboration ? 'done' : 'collab'}`}
-                    style={{
-                      width: `${Math.min(100, (collabPts / PILLAR_REQS.collaboration) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <span className="home-pillar-bar-label">
-                  {collabPts >= PILLAR_REQS.collaboration
-                    ? 'Min. met ✓'
-                    : `${PILLAR_REQS.collaboration - collabPts} more pts needed`}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -648,17 +299,15 @@ export default function HomePage({
               <i className="ri-sparkling-2-line"></i>
               Featured This Quarter
             </h2>
-            <span className="home-section-badge-pill">
-              <i className="ri-gift-line"></i> Bonus Points
-            </span>
           </div>
           <p className="home-section-subtitle">
             These items carry bonus points this quarter — great choices for your plan.
           </p>
-          <div className="home-featured-scroll">
+          <div className="home-featured-grid">
             {ALL_PROMOTED.map((item) => {
               const basePts = item.points;
               const bonusPts = item.promotedPoints ?? item.points;
+              const bonusDelta = bonusPts - basePts;
               const inCart = cartItemIds.has(item.id);
               const navId =
                 item.category === 'knowledge-unlock'
@@ -676,121 +325,71 @@ export default function HomePage({
                 <div
                   key={item.id}
                   className={`home-featured-card ${inCart ? 'in-cart' : ''}`}
-                  onClick={() => onNavigate(navId, navLabel)}
+                  onClick={() =>
+                    onOpenCatalogItem
+                      ? onOpenCatalogItem(item)
+                      : onNavigate(navId, navLabel)
+                  }
                 >
-                  <div className="home-featured-img-wrap">
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} />
-                    ) : (
-                      <i className="ri-award-line"></i>
-                    )}
-                    {inCart && (
-                      <div className="home-featured-in-cart-badge">
-                        <i className="ri-check-line"></i>
-                      </div>
-                    )}
-                  </div>
-                  <div className="home-featured-body">
-                    <span className="home-featured-name">{item.name}</span>
-                    {item.subcategory && (
-                      <span className="home-featured-sub">{item.subcategory}</span>
-                    )}
-                    <div className="home-featured-pts">
-                      {bonusPts !== basePts && (
-                        <span className="home-featured-pts-base">{basePts} pts</span>
+                  <div className="home-featured-top">
+                    <div className="home-featured-img-wrap">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} />
+                      ) : (
+                        <i className="ri-award-line"></i>
                       )}
-                      <span className="home-featured-pts-bonus">{bonusPts} pts</span>
+                      {inCart && (
+                        <div className="home-featured-in-cart-badge">
+                          <i className="ri-check-line"></i>
+                        </div>
+                      )}
+                    </div>
+                    <div className="home-featured-heading">
+                      {item.subcategory && (
+                        <span className="home-featured-provider">
+                          {item.subcategory}
+                        </span>
+                      )}
+                      <span className="home-featured-name">{item.name}</span>
                     </div>
                   </div>
-                  <i className="home-featured-arrow ri-arrow-right-line"></i>
+                  <div className="home-featured-divider"></div>
+                  <div className="home-featured-bottom">
+                    <div className="home-featured-pts-block">
+                      {bonusDelta > 0 && (
+                        <div className="home-featured-bonus-line">
+                          <span className="home-featured-bonus-value">
+                            +{bonusDelta}
+                          </span>
+                          <span className="home-featured-bonus-label">
+                            pts bonus
+                          </span>
+                        </div>
+                      )}
+                      <div className="home-featured-pts">
+                        {bonusDelta > 0 && (
+                          <>
+                            <span className="home-featured-pts-base">
+                              {basePts} pts
+                            </span>
+                            <i className="ri-arrow-right-line home-featured-pts-arrow"></i>
+                          </>
+                        )}
+                        <span className="home-featured-pts-new">
+                          {bonusPts} pts
+                        </span>
+                      </div>
+                    </div>
+                    <span className="home-featured-go">
+                      <i className="ri-arrow-right-line"></i>
+                    </span>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
       )}
-
-      {/* ── Bottom Grid: Recent Activity ── */}
-      <div className="home-bottom-grid">
-
-        {/* Recent Achievements */}
-        <div className="home-card">
-          <div className="home-card-header-row">
-            <h2 className="home-section-title">
-              <i className="ri-trophy-line"></i>
-              Recent Achievements
-            </h2>
-            {user && (
-              <button
-                className="home-card-link-btn"
-                onClick={() => onNavigate('my-profile', 'My Profile')}
-              >
-                View all <i className="ri-arrow-right-line"></i>
-              </button>
-            )}
-          </div>
-          {!user ? (
-            <div className="home-empty-state">
-              <i className="ri-user-line"></i>
-              <p>Sign in to see your achievements.</p>
-            </div>
-          ) : achLoading ? (
-            <div className="home-empty-state">
-              <p>Loading...</p>
-            </div>
-          ) : recentAchievements.length === 0 ? (
-            <div className="home-empty-state">
-              <i className="ri-inbox-line"></i>
-              <p>No achievements yet — complete items to earn them!</p>
-            </div>
-          ) : (
-            <div className="home-ach-list">
-              {recentAchievements.map(({ key, item, status, date, quarter }) => {
-                const pts = item.promotedPoints ?? item.points;
-                const pillar = PILLAR_CFG[item.category];
-                const statusColor =
-                  status === 'approved'
-                    ? 'var(--success-color)'
-                    : status === 'rejected'
-                    ? 'var(--error-color)'
-                    : status === 'submitted'
-                    ? 'var(--warning-color)'
-                    : 'var(--text-muted)';
-                return (
-                  <div key={key} className="home-ach-row">
-                    <div
-                      className="home-ach-icon"
-                      style={{ background: `${pillar?.color ?? 'var(--accent-color)'}18` }}
-                    >
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} />
-                      ) : (
-                        <i
-                          className={pillar?.icon ?? 'ri-star-line'}
-                          style={{ color: pillar?.color }}
-                        />
-                      )}
-                    </div>
-                    <div className="home-ach-info">
-                      <span className="home-ach-name">{item.name}</span>
-                      <div className="home-ach-meta">
-                        {quarter && <span className="home-ach-quarter">{quarter}</span>}
-                        <span className="home-ach-date">{fmtDate(date)}</span>
-                      </div>
-                    </div>
-                    <div className="home-ach-right">
-                      {pts > 0 && <span className="home-ach-pts">+{pts}</span>}
-                      <span className="home-ach-status" style={{ color: statusColor }}>
-                        {status}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* ── Guest CTA ── */}
       {!user && (

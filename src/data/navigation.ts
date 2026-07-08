@@ -20,14 +20,14 @@ export const navigation: NavSection[] = [
     title: 'Personal Zone',
     items: [
       { id: 'home', label: 'Home', icon: 'ri-home-4-line' },
-      { id: 'simulator', label: 'My Plan', icon: 'ri-calendar-todo-line' },
-      { id: 'my-profile', label: 'My Profile', icon: 'ri-user-3-line' },
+      { id: 'simulator', label: 'Plan', icon: 'ri-calendar-todo-line' },
+      { id: 'my-profile', label: 'Profile', icon: 'ri-user-3-line' },
     ],
   },
   {
     title: 'Team',
     items: [
-      { id: 'team-dashboard', label: 'My Team', icon: 'ri-team-line' },
+      { id: 'team-dashboard', label: 'TL Dashboard', icon: 'ri-team-line' },
     ],
   },
   {

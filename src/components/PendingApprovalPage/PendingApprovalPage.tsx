@@ -10,7 +10,8 @@ interface PendingApprovalPageProps {
   teamLeaderId: string;
   requestDate: string;
   onChangeTeamLeader: () => void;
-  onUseSimulator: () => void;
+  // SIMULATOR MODE DISABLED — restore together with the button below.
+  onUseSimulator?: () => void;
 }
 
 /**
@@ -21,7 +22,8 @@ export function PendingApprovalPage({
   teamLeaderId,
   requestDate,
   onChangeTeamLeader,
-  onUseSimulator,
+  // SIMULATOR MODE DISABLED:
+  // onUseSimulator,
 }: PendingApprovalPageProps) {
   const [teamLeader, setTeamLeader] = useState<UserDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,8 +101,8 @@ export function PendingApprovalPage({
               <p>Loading team leader information...</p>
             </div>
           ) : teamLeader ? (
-            <div className="team-leader-info">
-              <div className="team-leader-avatar">
+            <div className="pending-tl-info">
+              <div className="pending-tl-avatar">
                 {teamLeader.photoURL ? (
                   <img
                     src={teamLeader.photoURL}
@@ -123,7 +125,7 @@ export function PendingApprovalPage({
               </div>
             </div>
           ) : (
-            <div className="team-leader-info">
+            <div className="pending-tl-info">
               <p className="error-text">
                 <i className="ri-error-warning-line"></i>
                 Could not load team leader information
@@ -174,7 +176,7 @@ export function PendingApprovalPage({
             </ul>
           </div>
 
-          {/* Simulator note */}
+          {/* SIMULATOR MODE DISABLED — restore this block to offer the simulator while waiting.
           <div className="pending-simulator-note">
             <i className="ri-gamepad-line"></i>
             <div className="pending-simulator-text">
@@ -185,6 +187,7 @@ export function PendingApprovalPage({
               </button>
             </div>
           </div>
+          */}
 
           {/* Actions */}
           <div className="pending-actions">

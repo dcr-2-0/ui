@@ -91,16 +91,6 @@ export const collaboration: CatalogItem[] = [
       'Create an internal project in develeap with involvement of at least 1 other person outside your role scope (must be extra). Approved by GL.',
   },
   {
-    id: 'col-aws-service-delivery',
-    name: 'AWS service delivery process',
-    points: 70,
-    category: 'collaboration',
-    subcategory: 'AWS Partnership',
-    repeatable: true,
-    image: DEVELEAP_IMG,
-    description: 'AWS Service Delivery process, coordinated with Partnerships department (Hadar).',
-  },
-  {
     id: 'col-devops-qa',
     name: 'DevOps Evening Course Q&A',
     points: 40,
